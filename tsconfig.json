@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["node", "resuxjs/globals"],
+    "lib": ["ES2022", "DOM"]
+  },
+  "include": ["**/*.ts", "**/*.vue", "env.d.ts"],
+  "exclude": ["node_modules", ".resux", ".output"]
+}
