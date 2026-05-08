@@ -1,5 +1,5 @@
 import { defineNitroConfig } from "nitropack/config";
-import { cp, stat } from "node:fs/promises";
+import { cp, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 export default defineNitroConfig({
@@ -92,6 +92,16 @@ export default defineNitroConfig({
           force: true
         });
       }
+
+      const outputConfigPath = path.join(nitro.options.output.dir, "config.json");
+      const outputConfig = {
+        version: 3,
+        routes: [
+          { handle: "filesystem" },
+          { src: "/(.*)", dest: "/__fallback" }
+        ]
+      };
+      await writeFile(outputConfigPath, JSON.stringify(outputConfig, null, 2), "utf8");
     }
   }
 });
