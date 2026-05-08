@@ -1,4 +1,6 @@
 import { defineNitroConfig } from "nitropack/config";
+import { cp, stat } from "node:fs/promises";
+import path from "node:path";
 
 export default defineNitroConfig({
   compatibilityDate: "2026-05-02",
@@ -69,5 +71,27 @@ export default defineNitroConfig({
   prerender: {
     crawlLinks: false,
     routes: []
+  },
+  hooks: {
+    async compiled(nitro: any) {
+      const resuxServerDir = path.join(nitro.options.rootDir, ".resux", "server");
+      const functionsDir = path.join(nitro.options.output.dir, "functions");
+      const functionNames = ["__fallback.func", "[...].func"];
+
+      for (const functionName of functionNames) {
+        const functionDir = path.join(functionsDir, functionName);
+
+        try {
+          await stat(functionDir);
+        } catch {
+          continue;
+        }
+
+        await cp(resuxServerDir, path.join(functionDir, ".resux", "server"), {
+          recursive: true,
+          force: true
+        });
+      }
+    }
   }
 });
