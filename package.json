@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "resux dev . --port 3000",
-    "build": "resux build .",
+    "build": "node scripts/build.mjs",
     "preview": "resux preview . --port 3000"
   },
   "dependencies": {
