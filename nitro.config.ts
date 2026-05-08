@@ -77,6 +77,12 @@ export default defineNitroConfig({
       const resuxServerDir = path.join(nitro.options.rootDir, ".resux", "server");
       const functionsDir = path.join(nitro.options.output.dir, "functions");
       const functionNames = ["__fallback.func", "[...].func"];
+      const pluginUtilsSrc = path.join(
+        nitro.options.rootDir,
+        "node_modules",
+        "@rolldown",
+        "pluginutils"
+      );
 
       for (const functionName of functionNames) {
         const functionDir = path.join(functionsDir, functionName);
@@ -91,6 +97,31 @@ export default defineNitroConfig({
           recursive: true,
           force: true
         });
+
+        const pluginUtilsDest = path.join(
+          functionDir,
+          "node_modules",
+          "@rolldown",
+          "pluginutils"
+        );
+        try {
+          await stat(pluginUtilsDest);
+        } catch {
+          await cp(pluginUtilsSrc, pluginUtilsDest, {
+            recursive: true,
+            force: true
+          });
+        }
+
+        const functionConfigPath = path.join(functionDir, ".vc-config.json");
+        const functionConfig = {
+          runtime: "nodejs22.x",
+          handler: "index.mjs",
+          launcherType: "Nodejs",
+          shouldAddHelpers: false,
+          supportsResponseStreaming: true
+        };
+        await writeFile(functionConfigPath, JSON.stringify(functionConfig, null, 2), "utf8");
       }
 
       const outputConfigPath = path.join(nitro.options.output.dir, "config.json");
