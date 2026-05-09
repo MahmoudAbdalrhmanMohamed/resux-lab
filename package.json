@@ -5,12 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "resux dev . --port 3000",
-    "build": "node scripts/build.mjs",
+    "build": "resux build .",
     "preview": "resux preview . --port 3000"
   },
   "dependencies": {
-    "@rolldown/pluginutils": "^1.0.0-rc.18",
-    "resuxjs": "^0.2.29"
+    "resuxjs": "^0.2.30"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
