@@ -9,7 +9,7 @@
     "preview": "resux preview . --port 3000"
   },
   "dependencies": {
-    "resuxjs": "^0.2.30"
+    "resuxjs": "^0.2.31"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
