@@ -5,6 +5,7 @@
       <div class="mt-5 grid gap-2 text-sm text-slate-300">
         <ResuxLink to="/" class="rounded-2xl px-3 py-2 hover:bg-white/10">Overview</ResuxLink>
         <ResuxLink to="/async" class="rounded-2xl px-3 py-2 hover:bg-white/10">SSR data</ResuxLink>
+        <ResuxLink to="/media" class="rounded-2xl px-3 py-2 hover:bg-white/10">Images + loader</ResuxLink>
         <ResuxLink to="/performance" class="rounded-2xl px-3 py-2 hover:bg-white/10">Benchmarks</ResuxLink>
       </div>
     </aside>

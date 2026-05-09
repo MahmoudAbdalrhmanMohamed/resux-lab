@@ -11,10 +11,14 @@
           <ResuxLink to="/forms" class="badge hover:bg-white/20">Forms</ResuxLink>
           <ResuxLink to="/async" class="badge hover:bg-white/20">Async</ResuxLink>
           <ResuxLink to="/routes" class="badge hover:bg-white/20">Routes</ResuxLink>
+          <ResuxLink to="/media" class="badge hover:bg-white/20">Media</ResuxLink>
           <ResuxLink to="/performance" class="badge hover:bg-white/20">Performance</ResuxLink>
         </div>
       </nav>
     </header>
+    <ResuxLoadingIndicator color="#22d3ee" error-color="#f97316" height="4" duration="1700" throttle="0">
+      <p class="px-5 pt-2 pb-1 text-xs font-semibold uppercase tracking-[0.25em] text-cyan-200">Navigating</p>
+    </ResuxLoadingIndicator>
     <main class="shell pb-16">
       <ResuxPage />
     </main>

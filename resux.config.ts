@@ -1,36 +1,50 @@
 export default defineResuxConfig({
-  css: ['/tailwind.css'],
+  css: ["/tailwind.css"],
   modules: [
-    'resux:security',
-    ['resux:performance', { assetMaxAge: 31536000 }],
-    ['./modules/lab.ts', { label: 'Resux Lab Bench' }]
+    "resux:security",
+    ["resux:performance", { assetMaxAge: 31536000 }],
+    ["./modules/lab.ts", { label: "Resux Lab Bench" }],
   ],
   runtimeConfig: {
     public: {
-      appName: 'Resux Lab Bench',
-      appOrigin: process.env.APP_ORIGIN || 'http://localhost:3000'
-    }
+      appName: "Resux Lab Bench",
+      appOrigin: process.env.APP_ORIGIN || "http://localhost:3000",
+      image: {
+        provider: "resux",
+        quality: 82,
+        format: "webp",
+        densities: [1, 2],
+        providers: {
+          resux: { baseURL: "/__resux/image" },
+        },
+      },
+    },
   },
   app: {
     head: {
-      title: 'Resux Lab Bench',
+      title: "Resux Lab Bench",
       meta: [
-        { name: 'description', content: 'A full Resux test app with Tailwind, routing, SSR, APIs, middleware, and performance checks.' },
-        { name: 'theme-color', content: '#111827' }
-      ]
-    }
+        {
+          name: "description",
+          content:
+            "A full Resux test app with Tailwind, routing, SSR, APIs, middleware, and performance checks.",
+        },
+        { name: "theme-color", content: "#111827" },
+      ],
+      link: [{ rel: "icon", href: "/favicon.svg" }],
+    },
   },
   routeRules: {
-    '/performance': {
-      headers: { 'x-resux-lab-route': 'performance' },
-      cache: false
+    "/performance": {
+      headers: { "x-resux-lab-route": "performance" },
+      cache: false,
     },
-    '/old-dashboard': {
-      redirect: { to: '/', statusCode: 301 }
+    "/old-dashboard": {
+      redirect: { to: "/", statusCode: 301 },
     },
-    '/api/**': {
-      headers: { 'cache-control': 'no-store' },
-      cors: true
-    }
-  }
-})
+    "/api/**": {
+      headers: { "cache-control": "no-store" },
+      cors: true,
+    },
+  },
+});

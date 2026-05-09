@@ -12,6 +12,7 @@ const features = [
   { title: 'SSR async data', href: '/async', label: 'Data', status: 'ready' },
   { title: 'Dynamic routes', href: '/routes/alpha', label: 'Routing', status: 'ready' },
   { title: 'Catch-all docs', href: '/docs/resux/runtime/resume', label: 'Routing', status: 'ready' },
+  { title: 'Image pipeline + loader', href: '/media', label: 'Media', status: 'new' },
   { title: 'Performance tests', href: '/performance', label: 'Bench', status: 'ready' }
 ]
 </script>
