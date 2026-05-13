@@ -388,6 +388,26 @@ const videoCases: Array<Record<string, any>> = [
     preload: "metadata",
   },
   {
+    id: "video-custom-controls-theme",
+    title: "Lazy video with themed custom controls",
+    propsCode: `lazy controls controlsAccent="#22d3ee" controlsBackground="rgba(15,23,42,.80)" controlsColor="#f8fafc"`,
+    src: "/media-test/videos/sample-video.mp4",
+    controls: true,
+    lazy: true,
+    loading: "lazy",
+    poster: "/media-test/videos/sample-poster.jpg",
+    preload: "metadata",
+    controlsColor: "#f8fafc",
+    controlsBackground: "rgba(15,23,42,.80)",
+    controlsAccent: "#22d3ee",
+    controlsIconPlay: ">",
+    controlsIconPause: "||",
+    controlsIconMute: "M",
+    controlsIconUnmute: "S",
+    controlsIconFullscreen: "[ ]",
+    controlsIconExitFullscreen: "X",
+  },
+  {
     id: "video-lazy-default-placeholder",
     title: "Lazy video with default Resux placeholder",
     propsCode: `lazy :placeholder=\"true\" controls`,
@@ -639,6 +659,16 @@ const videoCases: Array<Record<string, any>> = [
             :threshold="entry.threshold ?? 0.01"
             :title="entry.title"
             :aria-label="entry.title"
+            :controls-color="entry.controlsColor"
+            :controls-background="entry.controlsBackground"
+            :controls-accent="entry.controlsAccent"
+            :controls-icon-play="entry.controlsIconPlay"
+            :controls-icon-pause="entry.controlsIconPause"
+            :controls-icon-mute="entry.controlsIconMute"
+            :controls-icon-unmute="entry.controlsIconUnmute"
+            :controls-icon-fullscreen="entry.controlsIconFullscreen"
+            :controls-icon-exit-fullscreen="entry.controlsIconExitFullscreen"
+            :native-controls="entry.nativeControls"
           />
         </article>
       </div>
