@@ -43,6 +43,13 @@ function inferMediaHeight(src: string | undefined, width: number | undefined): n
   return Math.max(1, Math.round((width * size.height) / size.width));
 }
 
+function inferMediaWidth(src: string | undefined): number | undefined {
+  if (!src) {
+    return undefined;
+  }
+  return mediaIntrinsicSizes[src]?.width;
+}
+
 const imgCases: Array<Record<string, any>> = [
   {
     id: "img-lazy-default",
@@ -209,7 +216,7 @@ const imgCases: Array<Record<string, any>> = [
   },
 ].map((entry) => ({
   ...entry,
-  height: entry.height ?? inferMediaHeight(entry.src, entry.width),
+  height: entry.height ?? inferMediaHeight(entry.src ?? entry.fallbackSrc, entry.width),
 }));
 
 const pictureCases: Array<Record<string, any>> = [
@@ -348,7 +355,12 @@ const pictureCases: Array<Record<string, any>> = [
   },
 ].map((entry) => ({
   ...entry,
-  height: entry.height ?? inferMediaHeight(entry.src, entry.width),
+  width: entry.width ?? inferMediaWidth(entry.src ?? entry.fallback ?? entry.fallbackSrc),
+  height: entry.height
+    ?? inferMediaHeight(
+      entry.src ?? entry.fallback ?? entry.fallbackSrc,
+      entry.width ?? inferMediaWidth(entry.src ?? entry.fallback ?? entry.fallbackSrc),
+    ),
 }));
 
 const videoCases: Array<Record<string, any>> = [
