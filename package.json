@@ -19,6 +19,6 @@
     "node": ">=20.19.0"
   },
   "dependencies": {
-    "resuxjs": "^0.2.38"
+    "resuxjs": "^0.2.39"
   }
 }
