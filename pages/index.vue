@@ -13,6 +13,8 @@ const features = [
   { title: 'Dynamic routes', href: '/routes/alpha', label: 'Routing', status: 'ready' },
   { title: 'Catch-all docs', href: '/docs/resux/runtime/resume', label: 'Routing', status: 'ready' },
   { title: 'Image pipeline + loader', href: '/media', label: 'Media', status: 'new' },
+  { title: 'Package compatibility demos', href: '/package-tests', label: 'Packages', status: 'new' },
+  { title: 'Safety and configuration', href: '/halal-test', label: 'Security', status: 'new' },
   { title: 'Performance tests', href: '/performance', label: 'Bench', status: 'ready' }
 ]
 </script>

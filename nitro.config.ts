@@ -11,7 +11,8 @@ export default defineNitroConfig({
     },
     {
       dir: ".resux/client",
-      baseURL: "/__resux"
+      baseURL: "/__resux",
+      fallthrough: true
     }
   ],
   serverAssets: [
@@ -61,7 +62,12 @@ export default defineNitroConfig({
       headers: {
         "cache-control": "public, max-age=31536000, immutable"
       }
+    },    "/__resux/image": {
+      headers: {
+        "cache-control": "public, max-age=31536000, immutable"
+      }
     },
+
     "/api/**": {
       headers: {
         "cache-control": "no-store"

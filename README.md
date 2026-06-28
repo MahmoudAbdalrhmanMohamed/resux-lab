@@ -39,6 +39,21 @@ npm run build
 npm run preview
 ```
 
+## Media E2E Check
+
+After a build, run:
+
+```bash
+npm run test:e2e
+```
+
+This validates:
+
+- `/media-test/video` click zones and control markers
+- `/media-test/images` lazy/eager placeholder states
+- `/media-test/lcp` single priority LCP image with preload metadata
+- `/package-tests/*` SSR-first package compatibility pages and enhancement markers
+
 ## Performance smoke test
 
 Start the app first, then run:
@@ -61,6 +76,18 @@ The smoke script calls important routes multiple times and prints average/min/ma
 - `/performance` browser-side interaction timing and API benchmark
 - `/vue-island` Vue runtime island escape hatch
 - `/secure` route middleware demo
+- `/media-test/video` single ResuxVideo hero section (zones, controls layering, loading states)
+- `/media-test/images` ResuxImg/ResuxPicture placeholder and fallback states
+- `/media-test/lcp` single high-size LCP priority image route
+- `/package-tests` package compatibility index
+- `/package-tests/swiper` SSR-first Swiper progressive enhancement page
+- `/package-tests/chart` SSR table fallback + chart enhancement marker
+- `/package-tests/animation` SSR content + animation enhancement marker
+- `/package-tests/video-player` SSR native video fallback + player enhancement marker
+- `/package-tests/markdown` SSR article/code fallback + markdown enhancement marker
+- `/package-tests/utility` SSR-safe utility package example
+- `/package-tests/css-package` CSS package enhancement example
+- `/package-tests/missing-package` missing package diagnostics demo
 - `/api/stats` JSON endpoint
 - `/bench` server route endpoint
 - `/__resux/health` built-in health check

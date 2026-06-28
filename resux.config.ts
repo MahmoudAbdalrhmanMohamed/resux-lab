@@ -5,7 +5,31 @@ export default defineResuxConfig({
     ["resux:performance", { assetMaxAge: 31536000 }],
     ["./modules/lab.ts", { label: "Resux Lab Bench" }],
   ],
+  packages: {
+    mode: {
+      swiper: "progressive",
+      "chart.js": "progressive",
+      echarts: "progressive",
+      gsap: "progressive",
+      animejs: "progressive",
+      plyr: "progressive",
+      marked: "ssr",
+      "date-fns": "ssr",
+      "lodash-es": "ssr",
+      "highlight.js": "progressive",
+      "mapbox-gl": "clientOnly",
+    },
+    css: {
+      swiper: [
+        "swiper/css",
+        "swiper/css/navigation",
+        "swiper/css/pagination",
+      ],
+      plyr: ["plyr/dist/plyr.css"],
+    },
+  },
   runtimeConfig: {
+    privateSecret: "lab-private-super-secret-99",
     public: {
       appName: "Resux Lab Bench",
       appOrigin: process.env.APP_ORIGIN || "http://localhost:3000",
@@ -47,4 +71,24 @@ export default defineResuxConfig({
       cors: true,
     },
   },
+  projectType: "education",
+  halalAI: {
+    enabled: true,
+    strict: false,
+    blockProductionBuild: false,
+    scanRoutes: true,
+    scanMeta: true,
+    scanContent: true,
+    scanExternalLinks: true,
+    scanRuntimeConfig: true,
+    scanDependencies: false,
+    categories: {
+      gambling: "block",
+      alcohol: "block",
+      adultContent: "block",
+      ribaFinance: "block",
+      drugs: "block",
+      violence: "warn"
+    }
+  }
 });
