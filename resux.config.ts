@@ -74,21 +74,5 @@ export default defineResuxConfig({
   projectType: "education",
   halalAI: {
     enabled: true,
-    strict: false,
-    blockProductionBuild: false,
-    scanRoutes: true,
-    scanMeta: true,
-    scanContent: true,
-    scanExternalLinks: true,
-    scanRuntimeConfig: true,
-    scanDependencies: false,
-    categories: {
-      gambling: "block",
-      alcohol: "block",
-      adultContent: "block",
-      ribaFinance: "block",
-      drugs: "block",
-      violence: "warn"
-    }
   }
 });

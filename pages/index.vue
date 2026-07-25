@@ -7,6 +7,12 @@ useSeoMeta({
   twitterCard: 'summary_large_image'
 })
 const features = [
+  { title: 'Reactivity & State', href: '/features/reactivity', label: 'Reactivity', status: 'new' },
+  { title: 'i18n Localization', href: '/features/i18n', label: 'i18n', status: 'new' },
+  { title: 'Device Intelligence', href: '/features/device', label: 'Device', status: 'new' },
+  { title: 'Error Boundary & Recovery', href: '/features/errors', label: 'Errors', status: 'new' },
+  { title: 'All-Features API Matrix', href: '/features/all-matrix', label: 'Matrix', status: 'new' },
+  { title: 'Halal Core & Halal-AI LLM', href: '/halal-test', label: 'AI/Security', status: 'new' },
   { title: 'Resumable handlers', href: '/state', label: 'Runtime', status: 'ready' },
   { title: 'v-model forms', href: '/forms', label: 'Compiler', status: 'ready' },
   { title: 'SSR async data', href: '/async', label: 'Data', status: 'ready' },
@@ -14,7 +20,6 @@ const features = [
   { title: 'Catch-all docs', href: '/docs/resux/runtime/resume', label: 'Routing', status: 'ready' },
   { title: 'Image pipeline + loader', href: '/media', label: 'Media', status: 'new' },
   { title: 'Package compatibility demos', href: '/package-tests', label: 'Packages', status: 'new' },
-  { title: 'Safety and configuration', href: '/halal-test', label: 'Security', status: 'new' },
   { title: 'Performance tests', href: '/performance', label: 'Bench', status: 'ready' }
 ]
 </script>
@@ -26,13 +31,13 @@ const features = [
       <h1 class="mt-5 max-w-4xl text-4xl font-black tracking-tight text-white sm:text-6xl">A polished Resux playground for testing functionality and performance.</h1>
       <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-300">Use this app to validate routing, server rendering, resumable event handlers, server APIs, middleware, layouts, route rules, Vue islands, and Tailwind styling in one project.</p>
       <div class="mt-8 flex flex-wrap gap-3">
-        <ResuxLink to="/performance" class="btn-primary">Open performance bench</ResuxLink>
-        <ResuxLink to="/state" class="btn-secondary">Test interactions</ResuxLink>
+        <ResuxLink to="/features/all-matrix" class="btn-primary">View All-Features Matrix</ResuxLink>
+        <ResuxLink to="/performance" class="btn-secondary">Open performance bench</ResuxLink>
       </div>
     </div>
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 w-full">
-      <ResuxLink v-for="feature in features" :to="feature.href" class="panel block p-5 hover:bg-white/[0.09]">
+      <ResuxLink v-for="feature in features" :key="feature.href" :to="feature.href" class="panel block p-5 hover:bg-white/[0.09]">
         <p class="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-200">{{ feature.label }}</p>
         <h2 class="mt-3 text-xl font-bold text-white">{{ feature.title }}</h2>
         <p class="mt-3 text-sm text-slate-400">Status: {{ feature.status }}</p>
