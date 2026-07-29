@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "resux dev . --port 3000",
+    "dev": "resux dev . --port 4000",
     "build": "resux build .",
-    "preview": "resux preview . --port 3000",
+    "preview": "resux preview . --port 4000",
     "test:e2e": "node --test tests/*.e2e.test.mjs"
   },
   "devDependencies": {
@@ -30,7 +30,7 @@
     "lodash-es": "^4.17.21",
     "marked": "^17.0.1",
     "plyr": "^3.8.3",
-    "resuxjs": "file:../resux/resuxjs-0.2.43.tgz",
+    "resuxjs": "file:../resux/resuxjs-0.3.0.tgz",
     "swiper": "^12.1.4"
   }
 }
