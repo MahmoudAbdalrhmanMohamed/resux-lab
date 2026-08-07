@@ -51,22 +51,21 @@ jobs:
           npm --prefix ../resux run build
           (cd ../resux && npm pack --pack-destination .)
 
-          TARBALL="../resux/resuxjs-0.3.0.tgz"
-          RESUX_INTEGRITY="sha512-$(openssl dgst -sha512 -binary "${TARBALL}" | openssl base64 -A)"
-          RESUX_INTEGRITY="${RESUX_INTEGRITY}" node --input-type=module <<'NODE'
-          import { readFileSync, writeFileSync } from "node:fs";
+          # A framework ref may keep version 0.3.0 while changing its dependency
+          # graph. Refresh the lock from that exact local tarball first, then let
+          # the next strict `npm ci` validate the resolved engines and integrity.
+          npm_config_engine_strict=false npm install --package-lock-only --ignore-scripts
 
-          const lockPath = "package-lock.json";
-          const lock = JSON.parse(readFileSync(lockPath, "utf8"));
+          node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+          const lock = JSON.parse(readFileSync("package-lock.json", "utf8"));
           const framework = lock.packages?.["node_modules/resuxjs"];
           if (!framework || framework.resolved !== "file:../resux/resuxjs-0.3.0.tgz") {
-            throw new Error("Expected package-lock.json to point resuxjs at the sibling framework tarball.");
+            throw new Error("Expected package-lock.json to resolve resuxjs from the sibling framework tarball.");
           }
-          framework.integrity = process.env.RESUX_INTEGRITY;
-          writeFileSync(lockPath, `${JSON.stringify(lock, null, 2)}\n`, "utf8");
           NODE
 
-      - name: Install lab
+      - name: Install lab strictly
         run: npm ci
 
       - name: Build lab
@@ -102,23 +101,18 @@ jobs:
           npm --prefix ../resux ci
           npm --prefix ../resux run build
           (cd ../resux && npm pack --pack-destination .)
+          npm_config_engine_strict=false npm install --package-lock-only --ignore-scripts
 
-          TARBALL="../resux/resuxjs-0.3.0.tgz"
-          RESUX_INTEGRITY="sha512-$(openssl dgst -sha512 -binary "${TARBALL}" | openssl base64 -A)"
-          RESUX_INTEGRITY="${RESUX_INTEGRITY}" node --input-type=module <<'NODE'
-          import { readFileSync, writeFileSync } from "node:fs";
-
-          const lockPath = "package-lock.json";
-          const lock = JSON.parse(readFileSync(lockPath, "utf8"));
+          node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+          const lock = JSON.parse(readFileSync("package-lock.json", "utf8"));
           const framework = lock.packages?.["node_modules/resuxjs"];
           if (!framework || framework.resolved !== "file:../resux/resuxjs-0.3.0.tgz") {
-            throw new Error("Expected package-lock.json to point resuxjs at the sibling framework tarball.");
+            throw new Error("Expected package-lock.json to resolve resuxjs from the sibling framework tarball.");
           }
-          framework.integrity = process.env.RESUX_INTEGRITY;
-          writeFileSync(lockPath, `${JSON.stringify(lock, null, 2)}\n`, "utf8");
           NODE
 
-      - name: Install lab
+      - name: Install lab strictly
         run: npm ci
 
       - name: Install Chromium
