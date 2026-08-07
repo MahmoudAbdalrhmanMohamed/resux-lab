@@ -89,6 +89,9 @@ jobs:
       - name: Install lab strictly
         run: npm ci
 
+      - name: Install Chromium for E2E tests
+        run: npx playwright install --with-deps chromium
+
       - name: Build lab
         run: npm run build
 
