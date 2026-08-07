@@ -83,8 +83,12 @@ function onFiles(event: Event) {
     <section class="rounded-3xl border border-white/10 bg-white/5 p-6">
       <h2 class="text-2xl font-black text-white">Native file picker</h2>
       <p class="mt-2 text-slate-300">The file is inspected locally only; this demo does not upload it.</p>
+      <label for="capability-file-picker" class="mt-4 block font-bold text-white">
+        Select an image or PDF
+      </label>
       <input
-        class="mt-4 block w-full rounded-xl border border-white/20 bg-slate-950/50 p-3 text-white"
+        id="capability-file-picker"
+        class="mt-2 block w-full rounded-xl border border-white/20 bg-slate-950/50 p-3 text-white"
         data-testid="file-picker"
         type="file"
         accept="image/*,.pdf"

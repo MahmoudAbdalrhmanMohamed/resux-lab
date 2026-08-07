@@ -25,13 +25,7 @@ This app is intentionally not a tiny starter. It is the executable compatibility
 
 ## Framework under test
 
-The lab intentionally depends on a packed sibling checkout:
-
-```json
-"resuxjs": "file:../resux/resuxjs-0.3.0.tgz"
-```
-
-That makes the exact local framework source—not whatever happens to be published on npm—the dependency being tested.
+The lab tests a packed sibling Resux checkout rather than whatever version happens to be published on npm. The committed `package.json` points at the current local tarball name for ordinary development, while CI rewrites that dependency to the filename actually produced by `npm pack`. This allows branches, tags, and commit SHAs with a different package version to be tested correctly.
 
 For a fresh local checkout:
 
@@ -43,13 +37,21 @@ git clone https://github.com/MahmoudAbdalrhmanMohamed/resux-lab.git
 cd resux
 npm ci
 npm run build
+rm -f resuxjs-*.tgz
 npm pack
 
 cd ../resux-lab
-npm ci
+TARBALL="$(find ../resux -maxdepth 1 -type f -name 'resuxjs-*.tgz' -print -quit)"
+if [ -z "$TARBALL" ]; then
+  echo "No packed resuxjs tarball found" >&2
+  exit 1
+fi
+npm install --save-exact "$TARBALL"
 ```
 
-To test a framework branch, check out that branch in `../resux`, rebuild it, and run `npm pack` again before reinstalling/rebuilding the lab.
+The generated tarball is versioned, for example `resuxjs-0.3.0.tgz`, but scripts must discover the actual filename instead of assuming a fixed version.
+
+To test a framework branch, check out that branch in `../resux`, rebuild it, run `npm pack` again, and reinstall the newly generated tarball before rebuilding the lab.
 
 The GitHub Actions **Resux compatibility lab** workflow automates this setup. Its manual `resux_ref` input accepts any framework branch, tag, or commit SHA. Normal lab pull requests test against framework `main`.
 

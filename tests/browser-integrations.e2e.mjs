@@ -63,18 +63,23 @@ try {
   await page.goto(`${baseUrl}/integrations/browser-capabilities`, { waitUntil: "networkidle" });
   await page.locator('[data-testid="browser-capabilities"]').waitFor();
   await page.locator('[data-testid="file-picker"]').setInputFiles({
-    name: "audit.txt",
-    mimeType: "text/plain",
-    buffer: Buffer.from("Resux integration test"),
+    name: "audit.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4\n% Resux integration test\n"),
   });
   assert.match(
     await page.locator('[data-testid="file-picker-result"]').textContent(),
-    /audit\.txt/,
+    /audit\.pdf/,
   );
 
   await page.locator('[data-testid="check-camera-permission"]').click();
+  await page.waitForFunction(() => (
+    document.querySelector('[data-testid="camera-permission-result"]')?.textContent?.trim()
+      !== "Permission: not checked"
+  ));
   const permissionText = await page.locator('[data-testid="camera-permission-result"]').textContent();
   assert.ok(permissionText?.startsWith("Permission:"));
+  assert.notEqual(permissionText?.trim(), "Permission: not checked");
 
   console.log("Browser integration verification passed.");
 } finally {
