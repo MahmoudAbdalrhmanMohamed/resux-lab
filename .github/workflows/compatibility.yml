@@ -16,6 +16,8 @@ permissions:
 
 env:
   HALAL_REPORT_SECRET: resux-lab-ci-report-signing-secret-not-for-production
+  RESUX_HALAL_REPORT_SECRET: resux-lab-ci-report-signing-secret-not-for-production
+  RESUX_HALAL_REPORT_SIGNING_SECRET: resux-lab-ci-report-signing-secret-not-for-production
 
 jobs:
   compatibility:
