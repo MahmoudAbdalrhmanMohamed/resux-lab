@@ -14,6 +14,9 @@ on:
 permissions:
   contents: read
 
+env:
+  HALAL_REPORT_SECRET: resux-lab-ci-report-signing-secret-not-for-production
+
 jobs:
   compatibility:
     name: Node ${{ matrix.node }} build and HTTP tests
