@@ -3,6 +3,7 @@ export default defineResuxConfig({
   modules: [
     "resux:security",
     ["resux:performance", { assetMaxAge: 31536000 }],
+    ["resuxjs/ui", { defaultStyles: true }],
     ["./modules/lab.ts", { label: "Resux Lab Bench" }],
   ],
   packages: {
