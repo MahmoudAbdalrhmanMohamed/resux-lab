@@ -1,9 +1,0 @@
-node_modules
-.resux
-.output
-.nitro
-.vercel
-.env
-*.log
-dist
-coverage

@@ -1,1 +1,0 @@
-/// <reference types="resuxjs/globals" />
