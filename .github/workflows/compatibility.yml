@@ -46,6 +46,21 @@ jobs:
           npm --prefix ../resux run build
           (cd ../resux && npm pack --pack-destination .)
 
+          TARBALL="../resux/resuxjs-0.3.0.tgz"
+          RESUX_INTEGRITY="sha512-$(openssl dgst -sha512 -binary "${TARBALL}" | openssl base64 -A)"
+          RESUX_INTEGRITY="${RESUX_INTEGRITY}" node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs";
+
+          const lockPath = "package-lock.json";
+          const lock = JSON.parse(readFileSync(lockPath, "utf8"));
+          const framework = lock.packages?.["node_modules/resuxjs"];
+          if (!framework || framework.resolved !== "file:../resux/resuxjs-0.3.0.tgz") {
+            throw new Error("Expected package-lock.json to point resuxjs at the sibling framework tarball.");
+          }
+          framework.integrity = process.env.RESUX_INTEGRITY;
+          writeFileSync(lockPath, `${JSON.stringify(lock, null, 2)}\n`, "utf8");
+          NODE
+
       - name: Install lab
         run: npm ci
 
@@ -82,6 +97,21 @@ jobs:
           npm --prefix ../resux ci
           npm --prefix ../resux run build
           (cd ../resux && npm pack --pack-destination .)
+
+          TARBALL="../resux/resuxjs-0.3.0.tgz"
+          RESUX_INTEGRITY="sha512-$(openssl dgst -sha512 -binary "${TARBALL}" | openssl base64 -A)"
+          RESUX_INTEGRITY="${RESUX_INTEGRITY}" node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs";
+
+          const lockPath = "package-lock.json";
+          const lock = JSON.parse(readFileSync(lockPath, "utf8"));
+          const framework = lock.packages?.["node_modules/resuxjs"];
+          if (!framework || framework.resolved !== "file:../resux/resuxjs-0.3.0.tgz") {
+            throw new Error("Expected package-lock.json to point resuxjs at the sibling framework tarball.");
+          }
+          framework.integrity = process.env.RESUX_INTEGRITY;
+          writeFileSync(lockPath, `${JSON.stringify(lock, null, 2)}\n`, "utf8");
+          NODE
 
       - name: Install lab
         run: npm ci
