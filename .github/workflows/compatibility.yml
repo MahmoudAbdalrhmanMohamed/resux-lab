@@ -1,0 +1,96 @@
+name: Resux compatibility lab
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      resux_ref:
+        description: Resux branch, tag, or commit to verify
+        required: false
+        default: main
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility:
+    name: Node ${{ matrix.node }} build and HTTP tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20.19.0, 22]
+    steps:
+      - name: Checkout lab
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Prepare framework under test
+        shell: bash
+        env:
+          RESUX_REF: ${{ github.event.inputs.resux_ref || 'main' }}
+        run: |
+          set -euo pipefail
+          rm -rf ../resux
+          git clone --filter=blob:none https://github.com/MahmoudAbdalrhmanMohamed/resux.git ../resux
+          git -C ../resux fetch origin "${RESUX_REF}" --depth=1
+          git -C ../resux checkout --detach FETCH_HEAD
+          npm --prefix ../resux ci
+          npm --prefix ../resux run build
+          (cd ../resux && npm pack --pack-destination .)
+
+      - name: Install lab
+        run: npm ci
+
+      - name: Build lab
+        run: npm run build
+
+      - name: Run server compatibility tests
+        run: npm run test:e2e
+
+  browser:
+    name: Chromium UI and browser integrations
+    runs-on: ubuntu-latest
+    needs: compatibility
+    steps:
+      - name: Checkout lab
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Prepare framework under test
+        shell: bash
+        env:
+          RESUX_REF: ${{ github.event.inputs.resux_ref || 'main' }}
+        run: |
+          set -euo pipefail
+          rm -rf ../resux
+          git clone --filter=blob:none https://github.com/MahmoudAbdalrhmanMohamed/resux.git ../resux
+          git -C ../resux fetch origin "${RESUX_REF}" --depth=1
+          git -C ../resux checkout --detach FETCH_HEAD
+          npm --prefix ../resux ci
+          npm --prefix ../resux run build
+          (cd ../resux && npm pack --pack-destination .)
+
+      - name: Install lab
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build lab
+        run: npm run build
+
+      - name: Run browser integration tests
+        run: npm run test:browser
