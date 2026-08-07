@@ -37,7 +37,7 @@ For a fresh local checkout:
 
 ```sh
 # Parent directory
-ngit clone https://github.com/MahmoudAbdalrhmanMohamed/resux.git
+git clone https://github.com/MahmoudAbdalrhmanMohamed/resux.git
 git clone https://github.com/MahmoudAbdalrhmanMohamed/resux-lab.git
 
 cd resux
@@ -48,8 +48,6 @@ npm pack
 cd ../resux-lab
 npm ci
 ```
-
-> If you copied the commands, remove the accidental leading `n` before `git clone` if your shell does not accept it.
 
 To test a framework branch, check out that branch in `../resux`, rebuild it, and run `npm pack` again before reinstalling/rebuilding the lab.
 
