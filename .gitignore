@@ -1,0 +1,17 @@
+node_modules
+.resux
+.output
+public/tailwind.css
+public/_resux/generated/
+npm-debug.log*
+.env
+.DS_Store
+
+.vercel
+.resux-nitro
+.nitro
+dist
+.env.*
+!.env.example
+
+.agents/

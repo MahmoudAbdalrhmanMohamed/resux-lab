@@ -1,0 +1,36 @@
+{
+  "name": "resux-lab-bench",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "resux dev . --port 4000",
+    "build": "resux build .",
+    "preview": "resux preview . --port 4000",
+    "test:e2e": "node --test tests/*.e2e.test.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "autoprefixer": "^10.4.22",
+    "concurrently": "^9.2.1",
+    "playwright": "^1.60.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "dependencies": {
+    "animejs": "^4.2.2",
+    "chart.js": "^4.5.1",
+    "date-fns": "^4.1.0",
+    "echarts": "^6.0.0",
+    "gsap": "^3.13.0",
+    "highlight.js": "^11.11.1",
+    "lodash-es": "^4.17.21",
+    "marked": "^17.0.1",
+    "plyr": "^3.8.3",
+    "resuxjs": "file:../resux/resuxjs-0.3.0.tgz",
+    "swiper": "^12.1.4"
+  }
+}
