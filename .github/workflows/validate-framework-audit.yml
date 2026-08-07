@@ -34,15 +34,12 @@ jobs:
           npm --prefix ../resux ci
           npm --prefix ../resux run build
           (cd ../resux && npm pack --pack-destination .)
-          TARBALL="../resux/resuxjs-0.3.0.tgz"
-          RESUX_INTEGRITY="sha512-$(openssl dgst -sha512 -binary "${TARBALL}" | openssl base64 -A)"
-          RESUX_INTEGRITY="${RESUX_INTEGRITY}" node --input-type=module <<'NODE'
-          import { readFileSync, writeFileSync } from 'node:fs'
+          npm_config_engine_strict=false npm install --package-lock-only --ignore-scripts
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs'
           const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'))
           const pkg = lock.packages?.['node_modules/resuxjs']
-          if (!pkg) throw new Error('Missing resuxjs lock entry')
-          pkg.integrity = process.env.RESUX_INTEGRITY
-          writeFileSync('package-lock.json', `${JSON.stringify(lock, null, 2)}\n`)
+          if (!pkg?.resolved?.startsWith('file:../resux/resuxjs-')) throw new Error('Missing local resuxjs lock entry')
           NODE
       - run: npm ci
       - run: npm run build
@@ -65,16 +62,7 @@ jobs:
           npm --prefix ../resux ci
           npm --prefix ../resux run build
           (cd ../resux && npm pack --pack-destination .)
-          TARBALL="../resux/resuxjs-0.3.0.tgz"
-          RESUX_INTEGRITY="sha512-$(openssl dgst -sha512 -binary "${TARBALL}" | openssl base64 -A)"
-          RESUX_INTEGRITY="${RESUX_INTEGRITY}" node --input-type=module <<'NODE'
-          import { readFileSync, writeFileSync } from 'node:fs'
-          const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'))
-          const pkg = lock.packages?.['node_modules/resuxjs']
-          if (!pkg) throw new Error('Missing resuxjs lock entry')
-          pkg.integrity = process.env.RESUX_INTEGRITY
-          writeFileSync('package-lock.json', `${JSON.stringify(lock, null, 2)}\n`)
-          NODE
+          npm_config_engine_strict=false npm install --package-lock-only --ignore-scripts
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
