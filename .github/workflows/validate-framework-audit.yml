@@ -1,0 +1,81 @@
+name: Validate framework audit head
+
+on:
+  push:
+    branches: [audit/comprehensive-verification-20260807]
+    paths: [.github/workflows/validate-framework-audit.yml]
+
+permissions:
+  contents: read
+
+env:
+  HALAL_REPORT_SECRET: resux-lab-ci-report-signing-secret-not-for-production
+  RESUX_HALAL_REPORT_SECRET: resux-lab-ci-report-signing-secret-not-for-production
+  RESUX_HALAL_REPORT_SIGNING_SECRET: resux-lab-ci-report-signing-secret-not-for-production
+
+jobs:
+  compatibility:
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20.19.0, 22]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - name: Pack framework audit branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --branch fix/framework-audit-regressions --single-branch https://github.com/MahmoudAbdalrhmanMohamed/resux.git ../resux
+          npm --prefix ../resux ci
+          npm --prefix ../resux run build
+          (cd ../resux && npm pack --pack-destination .)
+          TARBALL="../resux/resuxjs-0.3.0.tgz"
+          RESUX_INTEGRITY="sha512-$(openssl dgst -sha512 -binary "${TARBALL}" | openssl base64 -A)"
+          RESUX_INTEGRITY="${RESUX_INTEGRITY}" node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs'
+          const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'))
+          const pkg = lock.packages?.['node_modules/resuxjs']
+          if (!pkg) throw new Error('Missing resuxjs lock entry')
+          pkg.integrity = process.env.RESUX_INTEGRITY
+          writeFileSync('package-lock.json', `${JSON.stringify(lock, null, 2)}\n`)
+          NODE
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:e2e
+
+  browser:
+    needs: compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Pack framework audit branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --branch fix/framework-audit-regressions --single-branch https://github.com/MahmoudAbdalrhmanMohamed/resux.git ../resux
+          npm --prefix ../resux ci
+          npm --prefix ../resux run build
+          (cd ../resux && npm pack --pack-destination .)
+          TARBALL="../resux/resuxjs-0.3.0.tgz"
+          RESUX_INTEGRITY="sha512-$(openssl dgst -sha512 -binary "${TARBALL}" | openssl base64 -A)"
+          RESUX_INTEGRITY="${RESUX_INTEGRITY}" node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs'
+          const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'))
+          const pkg = lock.packages?.['node_modules/resuxjs']
+          if (!pkg) throw new Error('Missing resuxjs lock entry')
+          pkg.integrity = process.env.RESUX_INTEGRITY
+          writeFileSync('package-lock.json', `${JSON.stringify(lock, null, 2)}\n`)
+          NODE
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:browser
