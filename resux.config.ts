@@ -2,7 +2,7 @@ export default defineResuxConfig({
   css: ["/tailwind.css"],
   modules: [
     "resux:security",
-    ["resux:performance", { assetMaxAge: 31536000 }],
+    ["resux:performance", { assetMaxAge: 0 }],
     ["resuxjs/ui", { defaultStyles: true }],
     ["./modules/lab.ts", { label: "Resux Lab Bench" }],
   ],
@@ -60,6 +60,10 @@ export default defineResuxConfig({
     },
   },
   routeRules: {
+    "/__resux/runtime-client.mjs": {
+      headers: { "cache-control": "no-cache, no-store, must-revalidate" },
+      cache: false,
+    },
     "/performance": {
       headers: { "x-resux-lab-route": "performance" },
       cache: false,
