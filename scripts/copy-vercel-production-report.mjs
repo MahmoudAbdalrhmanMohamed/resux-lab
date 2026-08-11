@@ -1,5 +1,5 @@
 import { cp, copyFile, mkdir, readFile, readdir, stat } from "node:fs/promises";
-import { createRequire } from "node:module";
+import { builtinModules, createRequire } from "node:module";
 import path from "node:path";
 
 const root = process.cwd();
@@ -10,6 +10,9 @@ const require = createRequire(path.join(root, "package.json"));
 const resuxPackageJson = require.resolve("resuxjs/package.json");
 const resuxPackageRoot = path.dirname(resuxPackageJson);
 const resuxDistRoot = path.join(resuxPackageRoot, "dist");
+const nodeBuiltins = new Set(
+  builtinModules.flatMap((name) => [name, name.startsWith("node:") ? name.slice(5) : `node:${name}`]),
+);
 
 async function exists(file) {
   try {
@@ -26,9 +29,9 @@ function packageNameFromSpecifier(specifier) {
     specifier.startsWith(".") ||
     specifier.startsWith("/") ||
     specifier.startsWith("#") ||
-    specifier.startsWith("node:") ||
     specifier.startsWith("data:") ||
-    specifier.startsWith("file:")
+    specifier.startsWith("file:") ||
+    nodeBuiltins.has(specifier)
   ) {
     return null;
   }
@@ -38,7 +41,8 @@ function packageNameFromSpecifier(specifier) {
     return scope && name ? `${scope}/${name}` : null;
   }
 
-  return specifier.split("/")[0] || null;
+  const packageName = specifier.split("/")[0] || null;
+  return packageName && !nodeBuiltins.has(packageName) ? packageName : null;
 }
 
 async function walkFiles(dir) {
@@ -145,7 +149,7 @@ async function collectRuntimePackageClosure(seedPackages) {
 
   while (queue.length) {
     const item = queue.shift();
-    if (!item || packages.has(item.name) || item.name === "resuxjs") {
+    if (!item || packages.has(item.name) || item.name === "resuxjs" || nodeBuiltins.has(item.name)) {
       continue;
     }
 
