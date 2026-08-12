@@ -11,6 +11,7 @@ const {
 } = useI18n();
 
 const navMessages = tm("i18n.nav");
+const greeting = computed(() => t("i18n.greeting", { name: "Developer" }));
 </script>
 
 <template>
@@ -42,7 +43,7 @@ const navMessages = tm("i18n.nav");
 
       <div class="space-y-2">
         <p id="t-welcome" class="text-xl font-semibold">{{ t("i18n.welcome") }}</p>
-        <p id="t-greeting">{{ t("i18n.greeting", { name: "Developer" }) }}</p>
+        <p id="t-greeting">{{ greeting }}</p>
         <p id="t-nav-home">{{ t("i18n.nav.home") }}</p>
         <p id="i18n-locale" class="font-mono text-sm">locale={{ locale }}</p>
         <p id="i18n-dir" class="font-mono text-sm">dir={{ dir }}</p>
