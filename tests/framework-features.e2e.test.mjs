@@ -106,6 +106,11 @@ test("prefix_except_default does not expose a duplicate /en page route", async (
   assert.equal(response.status, 404);
 });
 
+test("media page renders successfully through a direct SSR request", async () => {
+  const html = await fetchHtml("/media");
+  assert.match(html, /Media|Image|Video/i);
+});
+
 test("valid /media route payload endpoint renders successfully", async () => {
   const response = await fetch(`${baseUrl}/__resux/route?path=${encodeURIComponent("/media")}`, {
     headers: { accept: "application/json" },
