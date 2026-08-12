@@ -77,6 +77,9 @@ jobs:
           if (!/^[a-f0-9]{24}$/.test(buildId || '')) throw new Error('Missing Resux build compatibility ID')
           console.log(JSON.stringify({ checkedRoutes: paths.length, buildId }))
           NODE
+      - name: Install browser
+        working-directory: resux-lab
+        run: npx playwright install --with-deps chromium
       - name: Run SSR/E2E regression suite
         working-directory: resux-lab
         run: |
@@ -85,13 +88,10 @@ jobs:
           status=$?
           cat e2e.log
           if [ "$status" -ne 0 ]; then
-            message=$(tail -n 120 e2e.log | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+            message=$(tail -n 160 e2e.log | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
             echo "::error title=Resux Lab E2E failed::$message"
             exit "$status"
           fi
-      - name: Install browser
-        working-directory: resux-lab
-        run: npx playwright install --with-deps chromium
       - name: Run browser regression suite
         working-directory: resux-lab
         run: |
@@ -100,7 +100,7 @@ jobs:
           status=$?
           cat browser.log
           if [ "$status" -ne 0 ]; then
-            message=$(tail -n 120 browser.log | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+            message=$(tail -n 160 browser.log | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
             echo "::error title=Resux Lab browser regression failed::$message"
             exit "$status"
           fi
