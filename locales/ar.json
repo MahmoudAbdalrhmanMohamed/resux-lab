@@ -1,0 +1,14 @@
+{
+  "i18n": {
+    "title": "اختبار الترجمة في Resux",
+    "welcome": "مرحبًا بك في Resux",
+    "greeting": "مرحبًا {name}",
+    "description": "هذه الصفحة موجودة مرة واحدة فقط في pages/features/i18n.vue، ويضيف Resux مسارات اللغات تلقائيًا.",
+    "nav": {
+      "home": "الرئيسية",
+      "media": "الوسائط"
+    },
+    "routeLabel": "المسار المحلي الحالي",
+    "directionLabel": "اتجاه النص"
+  }
+}
