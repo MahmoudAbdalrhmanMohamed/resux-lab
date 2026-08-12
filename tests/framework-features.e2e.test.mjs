@@ -31,6 +31,10 @@ async function fetchHtml(routePath) {
   return response.text();
 }
 
+function assertHtml(html, matcher, message) {
+  assert.ok(matcher.test(html), message);
+}
+
 test.before(async () => {
   assert.equal(
     existsSync(serverEntry),
@@ -71,22 +75,22 @@ test("reactivity feature page renders reactive state checks and counters", async
 
 test("default-locale i18n route renders through real Resux i18n", async () => {
   const html = await fetchHtml("/features/i18n");
-  assert.match(html, /i18n Localization Test/);
-  assert.match(html, /Welcome to Resux/);
-  assert.match(html, /Hello Developer/);
-  assert.match(html, /<html[^>]*lang="en"[^>]*dir="ltr"|<html[^>]*dir="ltr"[^>]*lang="en"/);
-  assert.match(html, /rel="canonical"[^>]*href="[^"]*\/features\/i18n"/);
-  assert.match(html, /hreflang="ar"[^>]*href="[^"]*\/ar\/features\/i18n"/);
+  assertHtml(html, /i18n Localization Test/, "Missing English i18n title");
+  assertHtml(html, /Welcome to Resux/, "Missing English welcome translation");
+  assertHtml(html, /Hello Developer/, "Missing interpolated English greeting");
+  assertHtml(html, /<html[^>]*lang="en"[^>]*dir="ltr"|<html[^>]*dir="ltr"[^>]*lang="en"/, "English SSR html lang/dir are incorrect");
+  assertHtml(html, /rel="canonical"[^>]*href="[^"]*\/features\/i18n"/, "Missing English canonical i18n URL");
+  assertHtml(html, /hreflang="ar"[^>]*href="[^"]*\/ar\/features\/i18n"/, "Missing Arabic alternate i18n URL");
 });
 
 test("Arabic i18n route is a direct SSR route with RTL and localized SEO", async () => {
   const html = await fetchHtml("/ar/features/i18n");
-  assert.match(html, /اختبار الترجمة في Resux/);
-  assert.match(html, /مرحبًا بك في Resux/);
-  assert.match(html, /<html[^>]*lang="ar"[^>]*dir="rtl"|<html[^>]*dir="rtl"[^>]*lang="ar"/);
-  assert.match(html, /rel="canonical"[^>]*href="[^"]*\/ar\/features\/i18n"/);
-  assert.match(html, /hreflang="en"[^>]*href="[^"]*\/features\/i18n"/);
-  assert.match(html, /hreflang="x-default"[^>]*href="[^"]*\/features\/i18n"/);
+  assertHtml(html, /اختبار الترجمة في Resux/, "Missing Arabic i18n title");
+  assertHtml(html, /مرحبًا بك في Resux/, "Missing Arabic welcome translation");
+  assertHtml(html, /<html[^>]*lang="ar"[^>]*dir="rtl"|<html[^>]*dir="rtl"[^>]*lang="ar"/, "Arabic SSR html lang/dir are incorrect");
+  assertHtml(html, /rel="canonical"[^>]*href="[^"]*\/ar\/features\/i18n"/, "Missing Arabic canonical i18n URL");
+  assertHtml(html, /hreflang="en"[^>]*href="[^"]*\/features\/i18n"/, "Missing English alternate i18n URL");
+  assertHtml(html, /hreflang="x-default"[^>]*href="[^"]*\/features\/i18n"/, "Missing x-default i18n URL");
 });
 
 test("prefix_except_default does not expose a duplicate /en page route", async () => {
