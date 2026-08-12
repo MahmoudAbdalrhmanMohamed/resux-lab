@@ -80,8 +80,12 @@ test("speculative failure cools down repeated triggers and click retries authori
   const mediaLink = page.locator('a[href="/media"]').first();
   await mediaLink.waitFor();
 
+  const failedPrefetch = page.waitForResponse(
+    (response) => routePayloadPath(response.url()) === "/media",
+  );
   await mediaLink.hover();
-  await wait(100);
+  const failedResponse = await failedPrefetch;
+  assert.equal(failedResponse.status(), 500, "First speculative /media prefetch should fail intentionally.");
   assert.equal(mediaRequests, 1, "First speculative hover should issue exactly one failed request.");
 
   for (let index = 0; index < 8; index++) {
