@@ -38,11 +38,30 @@ async function waitForServerReady() {
   throw new Error("Timed out waiting for Resux Lab preview server.");
 }
 
+function routePayloadPath(url) {
+  const parsed = new URL(url);
+  if (parsed.pathname !== "/__resux/route") return null;
+  return parsed.searchParams.get("path");
+}
+
 let browser;
 try {
   await waitForServerReady();
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
+  const consoleErrors = [];
+  const pageErrors = [];
+  const mediaRouteRequests = [];
+
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("request", (request) => {
+    if (routePayloadPath(request.url()) === "/media") {
+      mediaRouteRequests.push(request.url());
+    }
+  });
 
   await page.goto(`${baseUrl}/ui`, { waitUntil: "networkidle" });
   await page.locator('[data-testid="ui-showcase"]').waitFor();
@@ -80,6 +99,64 @@ try {
   const permissionText = await page.locator('[data-testid="camera-permission-result"]').textContent();
   assert.ok(permissionText?.startsWith("Permission:"));
   assert.notEqual(permissionText?.trim(), "Permission: not checked");
+
+  await page.goto(`${baseUrl}/features/i18n`, { waitUntil: "networkidle" });
+  assert.equal(await page.locator("html").getAttribute("lang"), "en");
+  assert.equal(await page.locator("html").getAttribute("dir"), "ltr");
+  assert.match(await page.locator("#t-welcome").textContent(), /Welcome to Resux/);
+
+  await page.locator("#lang-ar").click();
+  await page.waitForURL(`${baseUrl}/ar/features/i18n`);
+  await page.locator("#i18n-locale").waitFor();
+  assert.match(await page.locator("#i18n-locale").textContent(), /locale=ar/);
+  assert.match(await page.locator("#i18n-dir").textContent(), /dir=rtl/);
+  assert.match(await page.locator("#t-welcome").textContent(), /مرحبًا بك في Resux/);
+  assert.equal(await page.locator("html").getAttribute("lang"), "ar");
+  assert.equal(await page.locator("html").getAttribute("dir"), "rtl");
+
+  await page.locator("#lang-en").click();
+  await page.waitForURL(`${baseUrl}/features/i18n`);
+  await page.goBack({ waitUntil: "networkidle" });
+  assert.equal(new URL(page.url()).pathname, "/ar/features/i18n");
+  await page.goForward({ waitUntil: "networkidle" });
+  assert.equal(new URL(page.url()).pathname, "/features/i18n");
+
+  mediaRouteRequests.length = 0;
+  await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+  const mediaLink = page.locator('a[href="/media"]').first();
+  await mediaLink.waitFor();
+
+  const firstPrefetch = page.waitForResponse((response) => routePayloadPath(response.url()) === "/media");
+  await mediaLink.hover();
+  const firstResponse = await firstPrefetch;
+  assert.equal(firstResponse.status(), 200);
+
+  for (let index = 0; index < 10; index++) {
+    await page.locator("h1").hover();
+    await mediaLink.hover();
+  }
+  await mediaLink.focus();
+  await wait(100);
+  assert.equal(mediaRouteRequests.length, 1, "Repeated hover/focus should reuse one /media route payload request.");
+
+  await mediaLink.click();
+  await page.waitForURL(`${baseUrl}/media`);
+  await wait(100);
+  assert.equal(mediaRouteRequests.length, 1, "Navigation should reuse the prefetched /media route payload.");
+
+  await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+  const reloadedMediaLink = page.locator('a[href="/media"]').first();
+  const secondPrefetch = page.waitForResponse((response) => routePayloadPath(response.url()) === "/media");
+  await reloadedMediaLink.hover();
+  assert.equal((await secondPrefetch).status(), 200);
+  assert.equal(mediaRouteRequests.length, 2, "A new browser document should start with a fresh route memory cache.");
+
+  assert.deepEqual(pageErrors, [], `Unexpected page errors: ${pageErrors.join("\n")}`);
+  assert.deepEqual(
+    consoleErrors.filter((message) => !/favicon/i.test(message)),
+    [],
+    `Unexpected console errors: ${consoleErrors.join("\n")}`,
+  );
 
   console.log("Browser integration verification passed.");
 } finally {
