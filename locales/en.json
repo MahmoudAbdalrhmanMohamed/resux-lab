@@ -1,0 +1,14 @@
+{
+  "i18n": {
+    "title": "i18n Localization Test",
+    "welcome": "Welcome to Resux",
+    "greeting": "Hello {name}",
+    "description": "This page exists once in pages/features/i18n.vue. Resux injects the localized route variants.",
+    "nav": {
+      "home": "Home",
+      "media": "Media"
+    },
+    "routeLabel": "Current localized route",
+    "directionLabel": "Text direction"
+  }
+}
