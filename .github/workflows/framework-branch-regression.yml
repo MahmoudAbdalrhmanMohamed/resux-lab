@@ -74,10 +74,28 @@ jobs:
           NODE
       - name: Run SSR/E2E regression suite
         working-directory: resux-lab
-        run: npm run test:e2e
+        run: |
+          set +e
+          npm run test:e2e > e2e.log 2>&1
+          status=$?
+          cat e2e.log
+          if [ "$status" -ne 0 ]; then
+            message=$(tail -n 120 e2e.log | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+            echo "::error title=Resux Lab E2E failed::$message"
+            exit "$status"
+          fi
       - name: Install browser
         working-directory: resux-lab
         run: npx playwright install --with-deps chromium
       - name: Run browser regression suite
         working-directory: resux-lab
-        run: npm run test:browser
+        run: |
+          set +e
+          npm run test:browser > browser.log 2>&1
+          status=$?
+          cat browser.log
+          if [ "$status" -ne 0 ]; then
+            message=$(tail -n 120 browser.log | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+            echo "::error title=Resux Lab browser regression failed::$message"
+            exit "$status"
+          fi
