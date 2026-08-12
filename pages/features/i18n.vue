@@ -11,7 +11,7 @@ const {
 } = useI18n();
 
 const navMessages = tm("i18n.nav");
-const greeting = computed(() => t("i18n.greeting", { name: "Developer" }));
+const greeting = t("i18n.greeting", { name: "Developer" });
 </script>
 
 <template>
