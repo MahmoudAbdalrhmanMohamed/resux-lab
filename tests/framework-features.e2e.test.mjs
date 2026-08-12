@@ -69,11 +69,40 @@ test("reactivity feature page renders reactive state checks and counters", async
   assert.match(html, /useState/);
 });
 
-test("i18n feature page renders localization string interpolations", async () => {
+test("default-locale i18n route renders through real Resux i18n", async () => {
   const html = await fetchHtml("/features/i18n");
   assert.match(html, /i18n Localization Test/);
   assert.match(html, /Welcome to Resux/);
   assert.match(html, /Hello Developer/);
+  assert.match(html, /<html[^>]*lang="en"[^>]*dir="ltr"|<html[^>]*dir="ltr"[^>]*lang="en"/);
+  assert.match(html, /rel="canonical"[^>]*href="[^"]*\/features\/i18n"/);
+  assert.match(html, /hreflang="ar"[^>]*href="[^"]*\/ar\/features\/i18n"/);
+});
+
+test("Arabic i18n route is a direct SSR route with RTL and localized SEO", async () => {
+  const html = await fetchHtml("/ar/features/i18n");
+  assert.match(html, /اختبار الترجمة في Resux/);
+  assert.match(html, /مرحبًا بك في Resux/);
+  assert.match(html, /<html[^>]*lang="ar"[^>]*dir="rtl"|<html[^>]*dir="rtl"[^>]*lang="ar"/);
+  assert.match(html, /rel="canonical"[^>]*href="[^"]*\/ar\/features\/i18n"/);
+  assert.match(html, /hreflang="en"[^>]*href="[^"]*\/features\/i18n"/);
+  assert.match(html, /hreflang="x-default"[^>]*href="[^"]*\/features\/i18n"/);
+});
+
+test("prefix_except_default does not expose a duplicate /en page route", async () => {
+  const response = await fetch(`${baseUrl}/en/features/i18n`, { redirect: "manual" });
+  assert.equal(response.status, 404);
+});
+
+test("valid /media route payload endpoint renders successfully", async () => {
+  const response = await fetch(`${baseUrl}/__resux/route?path=${encodeURIComponent("/media")}`, {
+    headers: { accept: "application/json" },
+  });
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(typeof payload.html, "string");
+  assert.match(payload.html, /Media|Image|Video/i);
+  assert.equal(typeof payload.payload, "object");
 });
 
 test("device feature page renders device detection flags", async () => {
