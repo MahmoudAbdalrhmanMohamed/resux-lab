@@ -9,8 +9,6 @@ const {
   switchLocalePath,
   setLocale,
 } = useI18n();
-
-const navMessages = tm("i18n.nav");
 </script>
 
 <template>
@@ -42,7 +40,7 @@ const navMessages = tm("i18n.nav");
 
       <div class="space-y-2">
         <p id="t-welcome" class="text-xl font-semibold">{{ t("i18n.welcome") }}</p>
-        <p id="t-greeting">{{ $t("i18n.greeting", { name: "Developer" }) }}</p>
+        <p id="t-greeting">{{ t("i18n.greeting", { name: "Developer" }) }}</p>
         <p id="t-nav-home">{{ t("i18n.nav.home") }}</p>
         <p id="i18n-locale" class="font-mono text-sm">locale={{ locale }}</p>
         <p id="i18n-dir" class="font-mono text-sm">dir={{ dir }}</p>
@@ -61,7 +59,7 @@ const navMessages = tm("i18n.nav");
         </div>
       </div>
 
-      <pre id="tm-nav" class="rounded bg-slate-950 p-3 text-xs text-slate-100 overflow-auto">{{ JSON.stringify(navMessages, null, 2) }}</pre>
+      <pre id="tm-nav" class="rounded bg-slate-950 p-3 text-xs text-slate-100 overflow-auto">{{ JSON.stringify(tm("i18n.nav"), null, 2) }}</pre>
     </section>
   </main>
 </template>
