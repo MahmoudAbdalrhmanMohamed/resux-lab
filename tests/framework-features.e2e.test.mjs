@@ -71,10 +71,6 @@ test("default-locale i18n route renders through real Resux i18n", async () => {
   const html = await fetchHtml("/features/i18n");
   assertHtml(html, /i18n Localization Test/, "Missing English i18n title");
   assertHtml(html, /Welcome to Resux/, "Missing English welcome translation");
-  if (!/Hello Developer/.test(html)) {
-    const greeting = html.match(/<p[^>]*id="t-greeting"[^>]*>([\s\S]*?)<\/p>/i)?.[1] ?? "<missing>";
-    console.error(`[i18n-diagnostic] rendered t-greeting=${JSON.stringify(greeting)}`);
-  }
   assertHtml(html, /Hello Developer/, "Missing interpolated English greeting");
   assertHtml(html, /<html[^>]*lang="en"[^>]*dir="ltr"|<html[^>]*dir="ltr"[^>]*lang="en"/, "English SSR html lang/dir are incorrect");
   assertHtml(html, /rel="canonical"[^>]*href="[^"]*\/features\/i18n"/, "Missing English canonical i18n URL");
@@ -107,7 +103,7 @@ test("valid /media route payload endpoint renders successfully", async () => {
   const contentType = response.headers.get("content-type") ?? "";
   assert.match(contentType, /application\/json/i);
   const payload = await response.json();
-  assert.equal(payload?.route?.path, "/media");
+  assert.equal(payload?.payload?.route?.path, "/media");
   assert.match(String(payload?.html ?? ""), /Media|Image|Video/i);
 });
 
