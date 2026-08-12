@@ -6,6 +6,11 @@ on:
       - agent/framework-i18n-runtime-regressions
     paths:
       - .github/workflows/framework-branch-regression.yml
+      - resux.config.ts
+      - package.json
+      - pages/features/i18n.vue
+      - locales/**
+      - tests/**
   workflow_dispatch:
 
 permissions:
