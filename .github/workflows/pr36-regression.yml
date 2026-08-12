@@ -22,12 +22,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: resux-lab
+          persist-credentials: false
       - name: Checkout framework follow-up
         uses: actions/checkout@v4
         with:
           repository: MahmoudAbdalrhmanMohamed/resux
           ref: fix/i18n-resume-authority
           path: resux
+          persist-credentials: false
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
