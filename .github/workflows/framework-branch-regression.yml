@@ -46,7 +46,7 @@ jobs:
       - name: Build lab
         working-directory: resux-lab
         env:
-          RESUX_HALAL_REPORT_SIGNING_SECRET: regression-only-signing-secret
+          RESUX_HALAL_REPORT_SIGNING_SECRET: regression-only-signing-secret-0123456789abcdef
         run: |
           set +e
           npm run build > build.log 2>&1
