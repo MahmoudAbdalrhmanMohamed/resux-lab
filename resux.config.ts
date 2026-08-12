@@ -2,10 +2,24 @@ export default defineResuxConfig({
   css: ["/tailwind.css"],
   modules: [
     "resux:security",
-    ["resux:performance", { assetMaxAge: 0 }],
+    ["resux:performance", { assetMaxAge: 31536000 }],
+    "resuxjs/i18n",
     ["resuxjs/ui", { defaultStyles: true }],
     ["./modules/lab.ts", { label: "Resux Lab Bench" }],
   ],
+  i18n: {
+    defaultLocale: "en",
+    fallbackLocale: "en",
+    strategy: "prefix_except_default",
+    locales: [
+      { code: "en", name: "English", dir: "ltr" },
+      { code: "ar", name: "العربية", dir: "rtl" },
+    ],
+    messages: {
+      en: "./locales/en.json",
+      ar: "./locales/ar.json",
+    },
+  },
   packages: {
     mode: {
       swiper: "progressive",
@@ -60,10 +74,6 @@ export default defineResuxConfig({
     },
   },
   routeRules: {
-    "/__resux/runtime-client.mjs": {
-      headers: { "cache-control": "no-cache, no-store, must-revalidate" },
-      cache: false,
-    },
     "/performance": {
       headers: { "x-resux-lab-route": "performance" },
       cache: false,
