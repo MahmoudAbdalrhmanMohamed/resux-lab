@@ -1,0 +1,34 @@
+name: Live production audit
+
+on:
+  push:
+    branches:
+      - agent/framework-i18n-runtime-regressions
+    paths:
+      - .github/workflows/live-production-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Audit live routes and runtime headers
+        shell: bash
+        run: |
+          set +e
+          base='https://resux-lab.vercel.app'
+          for path in '/' '/features/i18n' '/ar/features/i18n' '/media' '/features/reactivity' '/__resux/route?path=%2Fmedia'; do
+            echo "===== $path ====="
+            curl -sS --max-time 30 -o /tmp/resux-body -D /tmp/resux-headers -w 'status=%{http_code} content_type=%{content_type} size=%{size_download}\n' "$base$path"
+            grep -Ei '^(cache-control|content-type|x-vercel|age|etag|location):' /tmp/resux-headers || true
+            head -c 240 /tmp/resux-body | tr '\n' ' '
+            echo
+          done
+          echo '===== /__resux/runtime-client.mjs ====='
+          curl -sS --max-time 30 -o /tmp/runtime -D /tmp/runtime-headers -w 'status=%{http_code} content_type=%{content_type} size=%{size_download}\n' "$base/__resux/runtime-client.mjs"
+          grep -Ei '^(cache-control|content-type|x-vercel|age|etag):' /tmp/runtime-headers || true
+          head -c 160 /tmp/runtime | tr '\n' ' '
+          echo
