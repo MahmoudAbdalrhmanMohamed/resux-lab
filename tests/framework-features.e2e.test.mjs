@@ -11,6 +11,7 @@ const host = "127.0.0.1";
 const baseUrl = `http://${host}:${port}`;
 const serverEntry = path.join(cwd, ".output", "server", "index.mjs");
 let serverProcess = null;
+let serverOutput = "";
 
 async function waitForServerReady() {
   for (let attempt = 0; attempt < 60; attempt++) {
@@ -22,13 +23,14 @@ async function waitForServerReady() {
     } catch {}
     await wait(250);
   }
-  throw new Error("Timed out waiting for preview server to become ready.");
+  throw new Error(`Timed out waiting for preview server to become ready.\n${serverOutput.slice(-8000)}`);
 }
 
 async function fetchHtml(routePath) {
   const response = await fetch(`${baseUrl}${routePath}`);
-  assert.equal(response.status, 200, `Expected 200 for ${routePath}`);
-  return response.text();
+  const html = await response.text();
+  assert.equal(response.status, 200, `Expected 200 for ${routePath}.\nBody: ${html.slice(0, 2000)}\nServer: ${serverOutput.slice(-8000)}`);
+  return html;
 }
 
 function assertHtml(html, matcher, message) {
@@ -52,6 +54,12 @@ test.before(async () => {
       NITRO_PORT: String(port),
     },
     stdio: ["ignore", "pipe", "pipe"],
+  });
+  serverProcess.stdout?.on("data", (chunk) => {
+    serverOutput += String(chunk);
+  });
+  serverProcess.stderr?.on("data", (chunk) => {
+    serverOutput += String(chunk);
   });
 
   await waitForServerReady();
@@ -102,8 +110,9 @@ test("valid /media route payload endpoint renders successfully", async () => {
   const response = await fetch(`${baseUrl}/__resux/route?path=${encodeURIComponent("/media")}`, {
     headers: { accept: "application/json" },
   });
-  assert.equal(response.status, 200);
-  const payload = await response.json();
+  const body = await response.text();
+  assert.equal(response.status, 200, `Expected /media route payload to return 200.\nBody: ${body.slice(0, 3000)}\nServer: ${serverOutput.slice(-12000)}`);
+  const payload = JSON.parse(body);
   assert.equal(typeof payload.html, "string");
   assert.match(payload.html, /Media|Image|Video/i);
   assert.equal(typeof payload.payload, "object");
