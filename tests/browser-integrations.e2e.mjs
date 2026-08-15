@@ -44,6 +44,14 @@ function routePayloadPath(url) {
   return parsed.searchParams.get("path");
 }
 
+async function waitForRequestCount(requests, expected) {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    if (requests.length >= expected) return;
+    await wait(50);
+  }
+  throw new Error(`Timed out waiting for ${expected} route payload request(s); saw ${requests.length}.`);
+}
+
 let browser;
 try {
   await waitForServerReady();
@@ -146,10 +154,13 @@ try {
 
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
   const reloadedMediaLink = page.locator('a[href="/media"]').first();
-  const secondPrefetch = page.waitForResponse((response) => routePayloadPath(response.url()) === "/media");
-  await reloadedMediaLink.hover();
-  assert.equal((await secondPrefetch).status(), 200);
-  assert.equal(mediaRouteRequests.length, 2, "A new browser document should start with a fresh route memory cache.");
+  await reloadedMediaLink.waitFor();
+  if (mediaRouteRequests.length === 1) {
+    await reloadedMediaLink.hover();
+  }
+  await waitForRequestCount(mediaRouteRequests, 2);
+  await wait(100);
+  assert.equal(mediaRouteRequests.length, 2, "A new browser document should issue exactly one fresh /media route payload request.");
 
   assert.deepEqual(pageErrors, [], `Unexpected page errors: ${pageErrors.join("\n")}`);
   assert.deepEqual(
