@@ -1,5 +1,6 @@
 name: PR 36 regression
 
+# Exact-head consumer proof after browser prefetch race hardening.
 on:
   push:
     branches: [agent/framework-i18n-runtime-regressions]
