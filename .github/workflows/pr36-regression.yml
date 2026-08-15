@@ -23,11 +23,11 @@ jobs:
         with:
           path: resux-lab
           persist-credentials: false
-      - name: Checkout framework follow-up
+      - name: Checkout reviewed framework follow-up
         uses: actions/checkout@v4
         with:
           repository: MahmoudAbdalrhmanMohamed/resux
-          ref: ec597ae4dc7e8a9d38e0cc97da081801c4c18224
+          ref: ea2f29efc102225ffb5f70fcb4629427de7f1186
           path: resux
           persist-credentials: false
       - name: Setup Node
