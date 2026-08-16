@@ -60,14 +60,14 @@ export default defineNitroConfig({
     },
     "/__resux/runtime-client.mjs": {
       headers: {
-        "cache-control": "public, max-age=31536000, immutable"
+        "cache-control": "no-cache, no-store, must-revalidate"
       }
-    },    "/__resux/image": {
+    },
+    "/__resux/image": {
       headers: {
         "cache-control": "public, max-age=31536000, immutable"
       }
     },
-
     "/api/**": {
       headers: {
         "cache-control": "no-store"
