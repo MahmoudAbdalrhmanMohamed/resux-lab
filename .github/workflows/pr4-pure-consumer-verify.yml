@@ -1,0 +1,147 @@
+name: PR 4 pure consumer verification
+
+on:
+  push:
+    branches: [agent/framework-i18n-runtime-regressions]
+    paths:
+      - .github/workflows/pr4-pure-consumer-verify.yml
+
+permissions:
+  contents: write
+
+env:
+  HALAL_REPORT_SECRET: resux-lab-ci-report-signing-secret-not-for-production
+  RESUX_HALAL_REPORT_SECRET: resux-lab-ci-report-signing-secret-not-for-production
+  RESUX_HALAL_REPORT_SIGNING_SECRET: resux-lab-ci-report-signing-secret-not-for-production
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Lab
+        uses: actions/checkout@v4
+        with:
+          ref: agent/framework-i18n-runtime-regressions
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Build exact framework PR 37 package
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none https://github.com/MahmoudAbdalrhmanMohamed/resux.git ../resux-pr37
+          git -C ../resux-pr37 fetch origin 72b72db876cf237cc9317cb6d1e665a603d74878 --depth=1
+          git -C ../resux-pr37 checkout --detach FETCH_HEAD
+          npm --prefix ../resux-pr37 ci
+          npm --prefix ../resux-pr37 run build
+          (cd ../resux-pr37 && npm pack --pack-destination . >/dev/null)
+
+      - name: Make verification workspace a pure consumer
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARBALL="$(find ../resux-pr37 -maxdepth 1 -name 'resuxjs-*.tgz' -print -quit)"
+          test -n "$TARBALL"
+          TARBALL_NAME="$(basename "$TARBALL")"
+          RESUX_DEP="file:../resux-pr37/$TARBALL_NAME"
+          RESUX_DEP="$RESUX_DEP" node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const packagePath = 'package.json';
+          const pkg = JSON.parse(readFileSync(packagePath, 'utf8'));
+          pkg.dependencies.resuxjs = process.env.RESUX_DEP;
+          pkg.scripts.build = 'resux build .';
+          writeFileSync(packagePath, JSON.stringify(pkg, null, 2) + '\n');
+
+          const nitroPath = 'nitro.config.ts';
+          let nitro = readFileSync(nitroPath, 'utf8');
+          nitro = nitro.replace(/\s*"\/__resux\/runtime-client\.mjs":\s*\{\s*headers:\s*\{\s*"cache-control":\s*"no-cache, no-store, must-revalidate"\s*\}\s*\},?/m, '');
+          if (nitro.includes('"/__resux/runtime-client.mjs"')) {
+            throw new Error('Failed to remove temporary Lab runtime-client cache override in verification workspace.');
+          }
+          writeFileSync(nitroPath, nitro);
+          NODE
+          npm_config_engine_strict=false npm install --package-lock-only --ignore-scripts
+          npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build Lab with framework-owned deployment output
+        run: npm run build
+
+      - name: Run Lab server E2E
+        run: npm run test:e2e
+
+      - name: Run Lab browser integration
+        run: npm run test:browser
+
+      - name: Verify framework-owned runtime cache headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          HOST=127.0.0.1 PORT=3440 NITRO_HOST=127.0.0.1 NITRO_PORT=3440 node .output/server/index.mjs > /tmp/pr4-server.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 80); do
+            if curl --fail --silent http://127.0.0.1:3440/__resux/health >/dev/null; then break; fi
+            sleep 0.25
+          done
+          curl --fail-with-body --silent --show-error -D /tmp/runtime.headers -o /tmp/runtime.mjs http://127.0.0.1:3440/__resux/runtime-client.mjs
+          grep -Eiq '^cache-control:.*no-cache.*no-store.*must-revalidate' /tmp/runtime.headers
+          curl --fail-with-body --silent --show-error -D /tmp/route.headers -o /tmp/route.json 'http://127.0.0.1:3440/__resux/route?path=%2Fmedia'
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const payload = JSON.parse(readFileSync('/tmp/route.json', 'utf8'));
+          if (payload?.payload?.route?.path !== '/media') throw new Error('Wrong /media route payload path.');
+          if (!String(payload?.html ?? '').includes('Resux Media QA')) throw new Error('Missing /media route-specific payload content.');
+          NODE
+
+      - name: Verify isolated Vercel function runtime imports
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d .vercel/output/functions
+          node --input-type=module <<'NODE'
+          import { readdir, stat } from 'node:fs/promises';
+          import path from 'node:path';
+          import { pathToFileURL } from 'node:url';
+
+          const root = path.resolve('.vercel/output/functions');
+          const entries = await readdir(root, { withFileTypes: true });
+          const funcs = entries.filter((entry) => entry.name.endsWith('.func'));
+          if (!funcs.length) throw new Error('No Vercel functions were emitted.');
+          for (const entry of funcs) {
+            const functionRoot = path.join(root, entry.name);
+            for (const required of [
+              '.resux/server/manifest.mjs',
+              '.resux/halal-report.json',
+              'node_modules/resuxjs/dist/index.js',
+              'node_modules/resuxjs/dist/node.js',
+              'index.mjs',
+            ]) {
+              await stat(path.join(functionRoot, required));
+            }
+            await import(pathToFileURL(path.join(functionRoot, 'index.mjs')).href);
+          }
+          console.log(`Verified ${funcs.length} isolated Vercel function(s).`);
+          NODE
+
+      - name: Restore branch and remove temporary verifier
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git reset --hard HEAD
+          rm -f .github/workflows/pr4-pure-consumer-verify.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/pr4-pure-consumer-verify.yml
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore: remove PR 4 pure consumer verifier'
+            git push origin HEAD:agent/framework-i18n-runtime-regressions
+          fi
