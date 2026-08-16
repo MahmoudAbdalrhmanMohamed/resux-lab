@@ -17,7 +17,9 @@ let browser;
 async function waitForServerReady() {
   for (let attempt = 0; attempt < 60; attempt++) {
     try {
-      const response = await fetch(`${baseUrl}/__resux/health`);
+      const response = await fetch(`${baseUrl}/__resux/health`, {
+        signal: AbortSignal.timeout(1_000),
+      });
       if (response.ok) return;
     } catch {}
     await wait(250);
@@ -96,8 +98,14 @@ test("speculative failure cools down repeated triggers and click retries authori
   await wait(150);
   assert.equal(mediaRequests, 1, "Failure cooldown must suppress immediate hover/focus retries.");
 
+  const authoritativeRetry = page.waitForResponse(
+    (response) => routePayloadPath(response.url()) === "/media",
+  );
   await mediaLink.click();
+  const retryResponse = await authoritativeRetry;
+  assert.equal(retryResponse.status(), 200, "Intentional navigation retry should receive a successful /media payload.");
   await page.waitForURL(`${baseUrl}/media`);
+  await page.locator("h1", { hasText: "ResuxImg, ResuxPicture, ResuxVideo" }).waitFor();
   assert.equal(mediaRequests, 2, "Intentional navigation should retry once after speculative failure.");
 
   await page.close();
