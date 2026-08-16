@@ -1,0 +1,81 @@
+name: Verify PR 4 against exact Resux follow-up
+
+on:
+  push:
+    branches:
+      - agent/framework-i18n-runtime-regressions
+    paths:
+      - ".github/workflows/pr4-exact-framework-verify.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout lab
+        uses: actions/checkout@v4
+        with:
+          ref: agent/framework-i18n-runtime-regressions
+          path: resux-lab
+          persist-credentials: false
+
+      - name: Checkout exact framework follow-up
+        uses: actions/checkout@v4
+        with:
+          repository: MahmoudAbdalrhmanMohamed/resux
+          ref: fd68b2317192e130b2cadf11f8537031ea495935
+          path: resux
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Build exact framework package
+        working-directory: resux
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm run build
+          npm pack --pack-destination /tmp
+
+      - name: Install exact framework in lab
+        working-directory: resux-lab
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm install --no-save --package-lock=false /tmp/resuxjs-*.tgz
+          npx playwright install --with-deps chromium
+
+      - name: Build lab
+        working-directory: resux-lab
+        env:
+          RESUX_HALAL_REPORT_SIGNING_SECRET: ci-resux-lab-signing-secret-for-regression-validation-2026
+        run: npm run build
+
+      - name: Run server E2E
+        working-directory: resux-lab
+        run: npm run test:e2e
+
+      - name: Run browser integration
+        working-directory: resux-lab
+        run: npm run test:browser
+
+      - name: Remove temporary verifier
+        if: always()
+        working-directory: resux-lab
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/pr4-exact-framework-verify.yml
+          git commit -m "chore: remove PR 4 exact-framework verifier"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push origin HEAD:agent/framework-i18n-runtime-regressions
