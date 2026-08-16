@@ -7,7 +7,7 @@
     "dev": "resux dev . --port 4000",
     "build": "resux build . && node scripts/copy-vercel-production-report.mjs",
     "preview": "resux preview . --port 4000",
-    "test:e2e": "node --test tests/*.e2e.test.mjs",
+    "test:e2e": "node --test --test-concurrency=1 tests/*.e2e.test.mjs",
     "test:browser": "node tests/browser-integrations.e2e.mjs"
   },
   "devDependencies": {
