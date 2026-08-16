@@ -30,7 +30,9 @@ const server = spawn(process.execPath, [serverEntry], {
 async function waitForServerReady() {
   for (let attempt = 0; attempt < 80; attempt++) {
     try {
-      const response = await fetch(`${baseUrl}/__resux/health`);
+      const response = await fetch(`${baseUrl}/__resux/health`, {
+        signal: AbortSignal.timeout(1_000),
+      });
       if (response.ok) return;
     } catch {}
     await wait(250);
@@ -50,6 +52,15 @@ async function waitForRequestCount(requests, expected) {
     await wait(50);
   }
   throw new Error(`Timed out waiting for ${expected} route payload request(s); saw ${requests.length}.`);
+}
+
+async function assertLocaleState(page, { locale, dir, welcome }) {
+  await page.locator("#i18n-locale").waitFor();
+  assert.match(await page.locator("#i18n-locale").textContent(), new RegExp(`locale=${locale}`));
+  assert.match(await page.locator("#i18n-dir").textContent(), new RegExp(`dir=${dir}`));
+  assert.match(await page.locator("#t-welcome").textContent(), welcome);
+  assert.equal(await page.locator("html").getAttribute("lang"), locale);
+  assert.equal(await page.locator("html").getAttribute("dir"), dir);
 }
 
 let browser;
@@ -109,25 +120,43 @@ try {
   assert.notEqual(permissionText?.trim(), "Permission: not checked");
 
   await page.goto(`${baseUrl}/features/i18n`, { waitUntil: "networkidle" });
-  assert.equal(await page.locator("html").getAttribute("lang"), "en");
-  assert.equal(await page.locator("html").getAttribute("dir"), "ltr");
-  assert.match(await page.locator("#t-welcome").textContent(), /Welcome to Resux/);
+  await assertLocaleState(page, {
+    locale: "en",
+    dir: "ltr",
+    welcome: /Welcome to Resux/,
+  });
 
   await page.locator("#lang-ar").click();
   await page.waitForURL(`${baseUrl}/ar/features/i18n`);
-  await page.locator("#i18n-locale").waitFor();
-  assert.match(await page.locator("#i18n-locale").textContent(), /locale=ar/);
-  assert.match(await page.locator("#i18n-dir").textContent(), /dir=rtl/);
-  assert.match(await page.locator("#t-welcome").textContent(), /مرحبًا بك في Resux/);
-  assert.equal(await page.locator("html").getAttribute("lang"), "ar");
-  assert.equal(await page.locator("html").getAttribute("dir"), "rtl");
+  await assertLocaleState(page, {
+    locale: "ar",
+    dir: "rtl",
+    welcome: /مرحبًا بك في Resux/,
+  });
 
   await page.locator("#lang-en").click();
   await page.waitForURL(`${baseUrl}/features/i18n`);
+  await assertLocaleState(page, {
+    locale: "en",
+    dir: "ltr",
+    welcome: /Welcome to Resux/,
+  });
+
   await page.goBack({ waitUntil: "networkidle" });
   assert.equal(new URL(page.url()).pathname, "/ar/features/i18n");
+  await assertLocaleState(page, {
+    locale: "ar",
+    dir: "rtl",
+    welcome: /مرحبًا بك في Resux/,
+  });
+
   await page.goForward({ waitUntil: "networkidle" });
   assert.equal(new URL(page.url()).pathname, "/features/i18n");
+  await assertLocaleState(page, {
+    locale: "en",
+    dir: "ltr",
+    welcome: /Welcome to Resux/,
+  });
 
   mediaRouteRequests.length = 0;
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
@@ -149,6 +178,7 @@ try {
 
   await mediaLink.click();
   await page.waitForURL(`${baseUrl}/media`);
+  await page.locator("h1", { hasText: "ResuxImg, ResuxPicture, ResuxVideo" }).waitFor();
   await wait(100);
   assert.equal(mediaRouteRequests.length, 1, "Navigation should reuse the prefetched /media route payload.");
 
