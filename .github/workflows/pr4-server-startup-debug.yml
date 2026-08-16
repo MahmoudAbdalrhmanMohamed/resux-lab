@@ -1,0 +1,91 @@
+name: Diagnose PR 4 preview startup
+
+on:
+  push:
+    branches:
+      - agent/framework-i18n-runtime-regressions
+    paths:
+      - ".github/workflows/pr4-server-startup-debug.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout lab
+        uses: actions/checkout@v4
+        with:
+          ref: agent/framework-i18n-runtime-regressions
+          path: resux-lab
+          persist-credentials: false
+
+      - name: Checkout framework
+        uses: actions/checkout@v4
+        with:
+          repository: MahmoudAbdalrhmanMohamed/resux
+          ref: 8c449ffa97377ea7a8e448352606e0da087cfda1
+          path: resux
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Diagnose startup
+        id: startup
+        continue-on-error: true
+        shell: bash
+        env:
+          RESUX_HALAL_REPORT_SIGNING_SECRET: ci-resux-lab-signing-secret-for-regression-validation-2026
+        run: |
+          set -euo pipefail
+          cd resux
+          npm ci --no-audit --no-fund
+          npm run build
+          npm pack --pack-destination /tmp
+          cd ../resux-lab
+          npm ci --no-audit --no-fund
+          npm install --no-save --package-lock=false /tmp/resuxjs-*.tgz
+          npm run build
+          HOST=127.0.0.1 PORT=3499 NITRO_HOST=127.0.0.1 NITRO_PORT=3499 node .output/server/index.mjs >/tmp/resux-lab-server.log 2>&1 &
+          pid=$!
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent --show-error http://127.0.0.1:3499/__resux/health >/tmp/health.txt; then
+              cat /tmp/health.txt
+              kill "$pid" || true
+              exit 0
+            fi
+            if ! kill -0 "$pid" 2>/dev/null; then
+              echo "Preview server exited before readiness"
+              cat /tmp/resux-lab-server.log
+              exit 1
+            fi
+            sleep 0.25
+          done
+          echo "Preview server never became ready"
+          cat /tmp/resux-lab-server.log
+          kill "$pid" || true
+          exit 1
+
+      - name: Show startup outcome
+        if: always()
+        run: echo "startup outcome=${{ steps.startup.outcome }}"
+
+      - name: Remove temporary debugger
+        if: always()
+        working-directory: resux-lab
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/pr4-server-startup-debug.yml
+          git commit -m "chore: remove PR 4 startup debugger"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push origin HEAD:agent/framework-i18n-runtime-regressions
