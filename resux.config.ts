@@ -74,6 +74,10 @@ export default defineResuxConfig({
     },
   },
   routeRules: {
+    "/__resux/runtime-client.mjs": {
+      headers: { "cache-control": "no-cache, no-store, must-revalidate" },
+      cache: false,
+    },
     "/performance": {
       headers: { "x-resux-lab-route": "performance" },
       cache: false,
