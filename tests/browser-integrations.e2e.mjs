@@ -55,7 +55,28 @@ async function waitForRequestCount(requests, expected) {
 }
 
 async function assertLocaleState(page, { locale, dir, welcome }) {
-  await page.locator("#i18n-locale").waitFor();
+  await page.waitForFunction(
+    ({ expectedLocale, expectedDir, welcomeSource }) => {
+      const localeText = document.querySelector("#i18n-locale")?.textContent || "";
+      const dirText = document.querySelector("#i18n-dir")?.textContent || "";
+      const welcomeText = document.querySelector("#t-welcome")?.textContent || "";
+      const welcomePattern = new RegExp(welcomeSource);
+      return (
+        localeText.includes(`locale=${expectedLocale}`)
+        && dirText.includes(`dir=${expectedDir}`)
+        && welcomePattern.test(welcomeText)
+        && document.documentElement.lang === expectedLocale
+        && document.documentElement.dir === expectedDir
+      );
+    },
+    {
+      expectedLocale: locale,
+      expectedDir: dir,
+      welcomeSource: welcome.source,
+    },
+    { timeout: 5_000 },
+  );
+
   assert.match(await page.locator("#i18n-locale").textContent(), new RegExp(`locale=${locale}`));
   assert.match(await page.locator("#i18n-dir").textContent(), new RegExp(`dir=${dir}`));
   assert.match(await page.locator("#t-welcome").textContent(), welcome);
