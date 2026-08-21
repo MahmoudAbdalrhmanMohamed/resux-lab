@@ -33,14 +33,13 @@ jobs:
           set -euo pipefail
           for attempt in $(seq 1 120); do
             FRAMEWORK="$(npm view resuxjs@0.3.8 version 2>/dev/null || true)"
-            CREATE="$(npm view create-resuxjs@0.3.8 version 2>/dev/null || true)"
-            if [ "$FRAMEWORK" = "0.3.8" ] && [ "$CREATE" = "0.3.8" ]; then
-              echo "resuxjs@0.3.8 and create-resuxjs@0.3.8 are published."
+            if [ "$FRAMEWORK" = "0.3.8" ]; then
+              echo "resuxjs@0.3.8 is published."
               exit 0
             fi
             sleep 5
           done
-          echo "Timed out waiting for Resux 0.3.8 publication."
+          echo "Timed out waiting for resuxjs@0.3.8 publication."
           exit 1
 
       - name: Update package and lockfile
