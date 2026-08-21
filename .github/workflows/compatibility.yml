@@ -98,6 +98,33 @@ jobs:
       - name: Run server compatibility tests
         run: npm run test:e2e
 
+  published-package:
+    name: Published resuxjs consumer gate (Node 22)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout lab
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked published dependency
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build lab with published resuxjs
+        run: npm run build
+
+      - name: Run published-package regressions
+        run: npm run test:e2e
+
   browser:
     name: Node ${{ matrix.node }} Chromium UI and browser integrations
     runs-on: ubuntu-latest

@@ -38,11 +38,6 @@ export default defineNitroConfig({
         "cache-control": "no-store"
       }
     },
-    "/__resux/handlers/**": {
-      headers: {
-        "cache-control": "public, max-age=31536000, immutable"
-      }
-    },
     "/__resux/plugins/**": {
       headers: {
         "cache-control": "public, max-age=31536000, immutable"
@@ -53,21 +48,11 @@ export default defineNitroConfig({
         "cache-control": "public, max-age=31536000, immutable"
       }
     },
-    "/__resux/vue-islands/**": {
+    "/__resux/image": {
       headers: {
         "cache-control": "public, max-age=31536000, immutable"
       }
     },
-    "/__resux/runtime-client.mjs": {
-      headers: {
-        "cache-control": "public, max-age=31536000, immutable"
-      }
-    },    "/__resux/image": {
-      headers: {
-        "cache-control": "public, max-age=31536000, immutable"
-      }
-    },
-
     "/api/**": {
       headers: {
         "cache-control": "no-store"
