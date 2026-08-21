@@ -6,7 +6,7 @@ import { setTimeout as wait } from "node:timers/promises";
 import { chromium } from "playwright";
 
 const cwd = process.cwd();
-const port = 3420;
+const port = 3426;
 const host = "127.0.0.1";
 const baseUrl = `http://${host}:${port}`;
 const serverEntry = path.join(cwd, ".output", "server", "index.mjs");
