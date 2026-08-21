@@ -1,0 +1,79 @@
+name: Update PR 4 to resuxjs 0.3.8
+
+on:
+  push:
+    branches:
+      - agent/framework-i18n-runtime-regressions
+    paths:
+      - .github/workflows/update-resux-0.3.8.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    if: ${{ !contains(github.event.head_commit.message, '[resux-0.3.8-done]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Wait for published Resux 0.3.8
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 120); do
+            FRAMEWORK="$(npm view resuxjs@0.3.8 version 2>/dev/null || true)"
+            CREATE="$(npm view create-resuxjs@0.3.8 version 2>/dev/null || true)"
+            if [ "$FRAMEWORK" = "0.3.8" ] && [ "$CREATE" = "0.3.8" ]; then
+              echo "resuxjs@0.3.8 and create-resuxjs@0.3.8 are published."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Timed out waiting for Resux 0.3.8 publication."
+          exit 1
+
+      - name: Update package and lockfile
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          pkg.dependencies.resuxjs = '^0.3.8';
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          NODE
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Verify locked published artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(node -p "require('./package.json').dependencies.resuxjs")" = "^0.3.8"
+          test "$(node -p "require('./package-lock.json').packages[''].dependencies.resuxjs")" = "^0.3.8"
+          test "$(node -p "require('./package-lock.json').packages['node_modules/resuxjs'].version")" = "0.3.8"
+          node -e "const lock=require('./package-lock.json'); const p=lock.packages['node_modules/resuxjs']; if (!p.resolved || !p.integrity) throw new Error('resuxjs@0.3.8 lock entry is missing resolved/integrity metadata')"
+
+      - name: Commit consumer update
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          if git diff --cached --quiet; then
+            echo "PR already consumes resuxjs 0.3.8."
+            exit 0
+          fi
+          git commit -m "chore: consume resuxjs 0.3.8 [resux-0.3.8-done]"
+          git push origin HEAD:agent/framework-i18n-runtime-regressions
