@@ -53,6 +53,13 @@ export default defineNitroConfig({
         "cache-control": "public, max-age=31536000, immutable"
       }
     },
+    "/media-test/**": {
+      headers: {
+        "cache-control": "public, max-age=86400",
+        "cdn-cache-control": "public, max-age=604800",
+        "vercel-cdn-cache-control": "public, max-age=604800"
+      }
+    },
     "/api/**": {
       headers: {
         "cache-control": "no-store"
