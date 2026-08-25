@@ -1,5 +1,11 @@
 import { defineNitroConfig } from "nitropack/config";
 
+const mediaFixtureCacheHeaders = {
+  "cache-control": "public, max-age=86400",
+  "cdn-cache-control": "public, max-age=604800",
+  "vercel-cdn-cache-control": "public, max-age=604800"
+};
+
 export default defineNitroConfig({
   compatibilityDate: "2026-05-02",
   ignore: ["modules/**", "plugins/**", "middleware/**"],
@@ -53,12 +59,11 @@ export default defineNitroConfig({
         "cache-control": "public, max-age=31536000, immutable"
       }
     },
-    "/media-test/**": {
-      headers: {
-        "cache-control": "public, max-age=86400",
-        "cdn-cache-control": "public, max-age=604800",
-        "vercel-cdn-cache-control": "public, max-age=604800"
-      }
+    "/media-test/images/**": {
+      headers: mediaFixtureCacheHeaders
+    },
+    "/media-test/videos/**": {
+      headers: mediaFixtureCacheHeaders
     },
     "/api/**": {
       headers: {
