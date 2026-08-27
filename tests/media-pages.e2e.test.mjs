@@ -114,11 +114,13 @@ test("media matrix keeps labeled eager image and video cases eager", async () =>
   const eagerImage = getMediaCaseMarkup(html, "img-eager-no-placeholder");
   assert.match(eagerImage, /<img\b[^>]*\bloading="eager"/i);
   assert.doesNotMatch(eagerImage, /data-rx-lazy-image="true"/i);
+  assert.doesNotMatch(eagerImage, /data-resux-lazy="true"/i);
 
   const eagerVideo = getMediaCaseMarkup(html, "video-eager-controls");
   assert.match(eagerVideo, /<video\b/i);
   assert.match(eagerVideo, /\bpreload="metadata"/i);
   assert.doesNotMatch(eagerVideo, /data-rx-lazy-video="true"/i);
+  assert.doesNotMatch(eagerVideo, /data-resux-lazy="true"/i);
 });
 
 test("video page renders one hero video with 3 click zones and control markers", async () => {
