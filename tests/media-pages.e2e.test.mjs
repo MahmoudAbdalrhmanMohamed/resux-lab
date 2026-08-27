@@ -97,6 +97,30 @@ test("direct static MP4 fixture is served as video without a transform function"
   assert.ok(body.byteLength > 100_000, "Expected the real MP4 fixture, not an HTML/error response");
 });
 
+function getMediaCaseMarkup(html, id) {
+  const marker = `data-media-case="${id}"`;
+  const markerIndex = html.indexOf(marker);
+  assert.notEqual(markerIndex, -1, `Missing media case ${id}`);
+  const articleStart = html.lastIndexOf("<article", markerIndex);
+  const articleEnd = html.indexOf("</article>", markerIndex);
+  assert.notEqual(articleStart, -1, `Missing article start for ${id}`);
+  assert.notEqual(articleEnd, -1, `Missing article end for ${id}`);
+  return html.slice(articleStart, articleEnd + "</article>".length);
+}
+
+test("media matrix keeps labeled eager image and video cases eager", async () => {
+  const html = await fetchHtml("/media");
+
+  const eagerImage = getMediaCaseMarkup(html, "img-eager-no-placeholder");
+  assert.match(eagerImage, /<img\b[^>]*\bloading="eager"/i);
+  assert.doesNotMatch(eagerImage, /data-rx-lazy-image="true"/i);
+
+  const eagerVideo = getMediaCaseMarkup(html, "video-eager-controls");
+  assert.match(eagerVideo, /<video\b/i);
+  assert.match(eagerVideo, /\bpreload="metadata"/i);
+  assert.doesNotMatch(eagerVideo, /data-rx-lazy-video="true"/i);
+});
+
 test("video page renders one hero video with 3 click zones and control markers", async () => {
   const html = await fetchHtml("/media-test/video");
   const videoElements = html.match(/<video[^>]*data-resux-media="video"/g) || [];
