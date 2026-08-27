@@ -88,6 +88,15 @@ test.after(async () => {
   await wait(200);
 });
 
+test("direct static MP4 fixture is served as video without a transform function", async () => {
+  const response = await fetch(`${baseUrl}/media-test/videos/sample-video.mp4`);
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") ?? "", /^video\/mp4(?:;|$)/i);
+
+  const body = await response.arrayBuffer();
+  assert.ok(body.byteLength > 100_000, "Expected the real MP4 fixture, not an HTML/error response");
+});
+
 test("video page renders one hero video with 3 click zones and control markers", async () => {
   const html = await fetchHtml("/media-test/video");
   const videoElements = html.match(/<video[^>]*data-resux-media="video"/g) || [];
