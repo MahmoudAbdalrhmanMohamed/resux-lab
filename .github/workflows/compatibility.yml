@@ -11,9 +11,6 @@ on:
         required: false
         default: main
 
-permissions:
-  contents: read
-
 env:
   HALAL_REPORT_SECRET: resux-lab-ci-report-signing-secret-not-for-production
   RESUX_HALAL_REPORT_SECRET: resux-lab-ci-report-signing-secret-not-for-production
@@ -23,6 +20,8 @@ jobs:
   compatibility:
     name: Node ${{ matrix.node }} build and HTTP tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -178,6 +177,8 @@ jobs:
   published-package:
     name: Published resuxjs consumer gate (Node 22)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout lab
         uses: actions/checkout@v4
@@ -205,6 +206,8 @@ jobs:
   browser:
     name: Node ${{ matrix.node }} Chromium UI and browser integrations
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: compatibility
     strategy:
       fail-fast: false
