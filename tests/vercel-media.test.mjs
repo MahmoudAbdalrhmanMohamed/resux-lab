@@ -1,17 +1,25 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { existsSync } from "node:fs";
-import { readFile, readdir, stat } from "node:fs/promises";
+import { cp, lstat, mkdtemp, readFile, readdir, readlink, rm, stat } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import test from "node:test";
 
 const originalCwd = process.cwd();
-const vercelOutput = path.join(originalCwd, ".vercel", "output");
-const functionsDir = path.join(vercelOutput, "functions");
-const staticDir = path.join(vercelOutput, "static");
+const builtVercelOutput = path.join(originalCwd, ".vercel", "output");
 
-async function findFunctionRoot() {
+function isInside(root, candidate) {
+  const relative = path.relative(root, candidate);
+  return relative === "" || (
+    relative !== ".."
+    && !relative.startsWith(`..${path.sep}`)
+    && !path.isAbsolute(relative)
+  );
+}
+
+async function findFunctionRoot(functionsDir) {
   const entries = await readdir(functionsDir, { withFileTypes: true });
   const functionNames = entries
     .filter((entry) => entry.isDirectory() && entry.name.endsWith(".func"))
@@ -22,6 +30,47 @@ async function findFunctionRoot() {
     ?? functionNames.find((name) => name === "[...].func")
     ?? functionNames[0];
   return path.join(functionsDir, preferred);
+}
+
+async function assertNoEscapingSymlinks(root) {
+  async function walk(directory) {
+    const entries = await readdir(directory, { withFileTypes: true });
+    for (const entry of entries) {
+      const entryPath = path.join(directory, entry.name);
+      const entryStats = await lstat(entryPath);
+
+      if (entryStats.isSymbolicLink()) {
+        const target = await readlink(entryPath);
+        const resolvedTarget = path.resolve(path.dirname(entryPath), target);
+        assert.equal(
+          isInside(root, resolvedTarget),
+          true,
+          `Packaged Vercel function contains a symlink that escapes the function bundle: ${entryPath} -> ${target}`,
+        );
+        continue;
+      }
+
+      if (entryStats.isDirectory()) {
+        await walk(entryPath);
+      }
+    }
+  }
+
+  await walk(root);
+}
+
+function assertNoAncestorNodeModules(functionRoot) {
+  let current = path.dirname(functionRoot);
+  while (true) {
+    assert.equal(
+      existsSync(path.join(current, "node_modules")),
+      false,
+      `Isolated Vercel function can still resolve dependencies from ancestor node_modules at ${current}`,
+    );
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
 }
 
 function contentTypeForStaticFile(filePath) {
@@ -35,7 +84,7 @@ function contentTypeForStaticFile(filePath) {
   return "application/octet-stream";
 }
 
-async function serveStaticAsset(req, res, pathname) {
+async function serveStaticAsset(staticDir, res, pathname) {
   let decoded;
   try {
     decoded = decodeURIComponent(pathname);
@@ -83,11 +132,28 @@ async function close(server) {
 }
 
 test("Vercel function serves cached generated media through the stateless path", async () => {
-  assert.equal(existsSync(path.join(vercelOutput, "config.json")), true, "Missing .vercel/output/config.json");
-  assert.equal(existsSync(staticDir), true, "Missing .vercel/output/static");
+  assert.equal(existsSync(path.join(builtVercelOutput, "config.json")), true, "Missing .vercel/output/config.json");
+  assert.equal(existsSync(path.join(builtVercelOutput, "static")), true, "Missing .vercel/output/static");
 
-  const functionRoot = await findFunctionRoot();
+  const isolatedParent = await mkdtemp(path.join(os.tmpdir(), "resux-vercel-output-"));
+  const vercelOutput = path.join(isolatedParent, "output");
+  await cp(builtVercelOutput, vercelOutput, {
+    recursive: true,
+    force: true,
+    verbatimSymlinks: true,
+  });
+
+  assert.equal(
+    isInside(originalCwd, vercelOutput),
+    false,
+    "Vercel runtime fixture must live outside the repository checkout",
+  );
+
+  const functionsDir = path.join(vercelOutput, "functions");
+  const staticDir = path.join(vercelOutput, "static");
+  const functionRoot = await findFunctionRoot(functionsDir);
   const functionEntry = path.join(functionRoot, "index.mjs");
+
   assert.equal(existsSync(functionEntry), true, `Missing Vercel function entry ${functionEntry}`);
   assert.equal(
     existsSync(path.join(functionRoot, ".resux", "server", "manifest.mjs")),
@@ -100,11 +166,16 @@ test("Vercel function serves cached generated media through the stateless path",
     "Vercel function is missing the packaged Resux framework runtime",
   );
 
+  await assertNoEscapingSymlinks(functionRoot);
+  assertNoAncestorNodeModules(functionRoot);
+
   const sourceImage = path.join(staticDir, "media-test", "images", "hero-square.jpg");
   const sourceVideo = path.join(staticDir, "media-test", "videos", "sample-video.mp4");
   assert.equal(existsSync(sourceImage), true, "Vercel static output is missing the image fixture");
   assert.equal(existsSync(sourceVideo), true, "Vercel static output is missing the MP4 fixture");
 
+  const previousVercel = process.env.VERCEL;
+  const previousVercelEnv = process.env.VERCEL_ENV;
   process.env.VERCEL = "1";
   process.env.VERCEL_ENV = "preview";
   process.chdir(functionRoot);
@@ -119,7 +190,7 @@ test("Vercel function serves cached generated media through the stateless path",
       try {
         const requestUrl = new URL(req.url ?? "/", "http://127.0.0.1");
         if (requestUrl.pathname.startsWith("/media-test/")) {
-          const served = await serveStaticAsset(req, res, requestUrl.pathname);
+          const served = await serveStaticAsset(staticDir, res, requestUrl.pathname);
           if (served) return;
         }
         await handler(req, res);
@@ -158,7 +229,7 @@ test("Vercel function serves cached generated media through the stateless path",
     assert.equal(response.headers.get("cache-control"), "public, max-age=86400, s-maxage=86400");
     assert.equal(response.headers.get("cdn-cache-control"), "public, max-age=86400");
     assert.equal(response.headers.get("vercel-cdn-cache-control"), "public, max-age=86400");
-    assert.ok(body.byteLength > 1_000, "Expected transformed image bytes from the packaged Vercel function");
+    assert.ok(body.byteLength > 1_000, "Expected transformed image bytes from the isolated Vercel function bundle");
 
     assert.equal(
       existsSync(path.join(functionRoot, "public", "_resux", "generated", "images")),
@@ -168,5 +239,10 @@ test("Vercel function serves cached generated media through the stateless path",
   } finally {
     if (server) await close(server);
     process.chdir(originalCwd);
+    if (previousVercel === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = previousVercel;
+    if (previousVercelEnv === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = previousVercelEnv;
+    await rm(isolatedParent, { recursive: true, force: true });
   }
 });
