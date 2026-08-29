@@ -114,16 +114,12 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Prepare framework under test
+      - name: Prepare framework main under test
         shell: bash
-        env:
-          RESUX_REF: ${{ github.event.inputs.resux_ref || 'main' }}
         run: |
           set -euo pipefail
           rm -rf ../resux
-          git clone --filter=blob:none https://github.com/MahmoudAbdalrhmanMohamed/resux.git ../resux
-          git -C ../resux fetch origin "${RESUX_REF}" --depth=1
-          git -C ../resux checkout --detach FETCH_HEAD
+          git clone --filter=blob:none --depth=1 --branch main https://github.com/MahmoudAbdalrhmanMohamed/resux.git ../resux
           npm --prefix ../resux ci
           npm --prefix ../resux run build
 
