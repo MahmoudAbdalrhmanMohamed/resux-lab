@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { existsSync } from "node:fs";
-import { cp, lstat, mkdtemp, readFile, readdir, readlink, rm, stat } from "node:fs/promises";
+import { cp, lstat, mkdtemp, readFile, readdir, readlink, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -73,42 +73,26 @@ function assertNoAncestorNodeModules(functionRoot) {
   }
 }
 
-function contentTypeForStaticFile(filePath) {
-  const extension = path.extname(filePath).toLowerCase();
-  if (extension === ".jpg" || extension === ".jpeg") return "image/jpeg";
-  if (extension === ".png") return "image/png";
-  if (extension === ".webp") return "image/webp";
-  if (extension === ".avif") return "image/avif";
-  if (extension === ".mp4") return "video/mp4";
-  if (extension === ".webm") return "video/webm";
-  return "application/octet-stream";
-}
+async function serveStaticFixture(staticDir, res, pathname) {
+  let filePath;
+  let contentType;
 
-async function serveStaticAsset(staticDir, res, pathname) {
-  let decoded;
-  try {
-    decoded = decodeURIComponent(pathname);
-  } catch {
-    res.writeHead(400);
-    res.end("Bad request");
-    return true;
-  }
-
-  const filePath = path.resolve(staticDir, `.${decoded}`);
-  if (!filePath.startsWith(staticDir + path.sep)) {
-    res.writeHead(403);
-    res.end("Forbidden");
-    return true;
-  }
-
-  const fileStats = await stat(filePath).catch(() => null);
-  if (!fileStats?.isFile()) {
-    return false;
+  switch (pathname) {
+    case "/media-test/images/hero-square.jpg":
+      filePath = path.join(staticDir, "media-test", "images", "hero-square.jpg");
+      contentType = "image/jpeg";
+      break;
+    case "/media-test/videos/sample-video.mp4":
+      filePath = path.join(staticDir, "media-test", "videos", "sample-video.mp4");
+      contentType = "video/mp4";
+      break;
+    default:
+      return false;
   }
 
   const body = await readFile(filePath);
   res.writeHead(200, {
-    "content-type": contentTypeForStaticFile(filePath),
+    "content-type": contentType,
     "content-length": String(body.byteLength),
   });
   res.end(body);
@@ -189,10 +173,8 @@ test("Vercel function serves cached generated media through the stateless path",
     server = createServer(async (req, res) => {
       try {
         const requestUrl = new URL(req.url ?? "/", "http://127.0.0.1");
-        if (requestUrl.pathname.startsWith("/media-test/")) {
-          const served = await serveStaticAsset(staticDir, res, requestUrl.pathname);
-          if (served) return;
-        }
+        const served = await serveStaticFixture(staticDir, res, requestUrl.pathname);
+        if (served) return;
         await handler(req, res);
       } catch (error) {
         if (!res.headersSent) {
