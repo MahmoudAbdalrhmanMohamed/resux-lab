@@ -28,6 +28,8 @@ jobs:
         run: npm install resuxjs@^0.3.10 --save
 
       - name: Validate build
+        env:
+          RESUX_HALAL_REPORT_SIGNING_SECRET: resux-lab-ci-only-release-validation-secret-0.3.10
         run: npm run build
 
       - name: Commit dependency update
