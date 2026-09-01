@@ -11,9 +11,6 @@ on:
         required: false
         default: main
 
-permissions:
-  contents: read
-
 env:
   HALAL_REPORT_SECRET: resux-lab-ci-report-signing-secret-not-for-production
   RESUX_HALAL_REPORT_SECRET: resux-lab-ci-report-signing-secret-not-for-production
@@ -23,6 +20,8 @@ jobs:
   compatibility:
     name: Node ${{ matrix.node }} build and HTTP tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -98,9 +97,84 @@ jobs:
       - name: Run server compatibility tests
         run: npm run test:e2e
 
+  vercel-media:
+    name: Vercel packaged generated-media gate (Node 22)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout lab
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Prepare framework main under test
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf ../resux
+          git clone --filter=blob:none --depth=1 --branch main https://github.com/MahmoudAbdalrhmanMohamed/resux.git ../resux
+          npm --prefix ../resux ci
+          npm --prefix ../resux run build
+
+          rm -f ../resux/resuxjs-*.tgz
+          (cd ../resux && npm pack --pack-destination . >/dev/null)
+          TARBALL_PATH="$(find ../resux -maxdepth 1 -type f -name 'resuxjs-*.tgz' -print -quit)"
+          if [ -z "${TARBALL_PATH}" ]; then
+            echo "No resuxjs tarball was produced by npm pack." >&2
+            exit 1
+          fi
+
+          TARBALL_NAME="$(basename "${TARBALL_PATH}")"
+          RESUX_DEP="file:../resux/${TARBALL_NAME}"
+
+          RESUX_DEP="${RESUX_DEP}" node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs";
+          const packagePath = "package.json";
+          const manifest = JSON.parse(readFileSync(packagePath, "utf8"));
+          manifest.dependencies ??= {};
+          manifest.dependencies.resuxjs = process.env.RESUX_DEP;
+          writeFileSync(packagePath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+          NODE
+
+          npm_config_engine_strict=false npm install --package-lock-only --ignore-scripts
+
+          RESUX_DEP="${RESUX_DEP}" node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+          const lock = JSON.parse(readFileSync("package-lock.json", "utf8"));
+          const framework = lock.packages?.["node_modules/resuxjs"];
+          if (!framework || framework.resolved !== process.env.RESUX_DEP) {
+            throw new Error(`Expected package-lock.json to resolve resuxjs from ${process.env.RESUX_DEP}.`);
+          }
+          NODE
+
+      - name: Install lab strictly
+        run: npm ci
+
+      - name: Build Vercel deployment artifact
+        env:
+          NITRO_PRESET: vercel
+          VERCEL: "1"
+          VERCEL_ENV: preview
+        run: npm run build
+
+      - name: Exercise packaged Vercel media handler
+        env:
+          VERCEL: "1"
+          VERCEL_ENV: preview
+        run: node --test tests/vercel-media.test.mjs
+
   published-package:
     name: Published resuxjs consumer gate (Node 22)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout lab
         uses: actions/checkout@v4
@@ -128,6 +202,8 @@ jobs:
   browser:
     name: Node ${{ matrix.node }} Chromium UI and browser integrations
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: compatibility
     strategy:
       fail-fast: false

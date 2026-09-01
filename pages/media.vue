@@ -98,9 +98,8 @@ const imgCases: Array<Record<string, any>> = [
     propsCode: `loading="eager" placeholder=undefined`,
     src: "/media-test/images/hero-large.png",
     alt: "Eager PNG image",
-        lazy: true,
-    loading: "lazy",
-    
+    lazy: false,
+    loading: "eager",
     placeholder: none,
     width: 1400,
     sizes: sharedSizes,
@@ -368,9 +367,8 @@ const videoCases: Array<Record<string, any>> = [
     src: "/media-test/videos/sample-video.mp4",
     controls: true,
     preload: "metadata",
-        lazy: true,
-    loading: "lazy",
-    
+    lazy: false,
+    loading: "eager",
     poster: "/media-test/videos/sample-poster.jpg",
   },
   {
@@ -1242,6 +1240,7 @@ const qualityControlOptions = [
         <article
           v-for="entry in imgCases"
           :key="entry.id"
+          :data-media-case="entry.id"
           class="min-w-0 overflow-hidden rounded-3xl border border-white/10 bg-slate-950/65 p-3 sm:p-4"
         >
           <p class="text-sm font-semibold text-white">{{ entry.title }}</p>
@@ -1320,6 +1319,7 @@ const qualityControlOptions = [
         <article
           v-for="entry in videoCases"
           :key="entry.id"
+          :data-media-case="entry.id"
           class="min-w-0 overflow-hidden rounded-3xl border border-white/10 bg-slate-950/65 p-3 sm:p-4"
         >
           <p class="text-sm font-semibold text-white">{{ entry.title }}</p>
