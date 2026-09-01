@@ -1,0 +1,45 @@
+name: Upgrade Resux dependency to 0.3.10
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/upgrade-resux-0.3.10.yml
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Upgrade Resux
+        run: npm install resuxjs@^0.3.10 --save
+
+      - name: Validate build
+        run: npm run build
+
+      - name: Commit dependency update
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json package-lock.json
+          if git diff --cached --quiet; then
+            echo 'Dependency files already up to date.'
+            exit 0
+          fi
+          git commit -m 'chore: upgrade resuxjs to 0.3.10'
+          git push origin HEAD:main
