@@ -6,6 +6,12 @@ const mediaFixtureCacheHeaders = {
   "vercel-cdn-cache-control": "public, max-age=604800"
 };
 
+const prerenderedPageCacheHeaders = {
+  "cache-control": "public, max-age=0, must-revalidate",
+  "cdn-cache-control": "public, max-age=31536000, immutable",
+  "vercel-cdn-cache-control": "public, max-age=31536000, immutable"
+};
+
 export default defineNitroConfig({
   compatibilityDate: "2026-05-02",
   ignore: ["modules/**", "plugins/**", "middleware/**"],
@@ -59,6 +65,9 @@ export default defineNitroConfig({
         "cache-control": "public, max-age=31536000, immutable"
       }
     },
+    "/media": {
+      headers: prerenderedPageCacheHeaders
+    },
     "/media-test/images/**": {
       headers: mediaFixtureCacheHeaders
     },
@@ -78,6 +87,6 @@ export default defineNitroConfig({
   },
   prerender: {
     crawlLinks: false,
-    routes: []
+    routes: ["/media"]
   }
 });
