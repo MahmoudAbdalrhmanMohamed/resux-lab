@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 definePageMeta({ layout: "dashboard", title: "Resux media components" });
 
 const none = undefined;
@@ -364,7 +364,7 @@ const videoCases: Array<Record<string, any>> = [
     id: "video-eager-controls",
     title: "Eager video with controls",
     propsCode: `src + controls + preload=\"metadata\"`,
-    src: "/media-test/videos/sample-video.mp4",
+    src: "/media-test/videos/sample-360.mp4",
     controls: true,
     preload: "metadata",
     lazy: false,
@@ -563,7 +563,7 @@ const advancedVideoCases: Array<Record<string, any>> = [
     title: "Hero priority preload mode",
     propsCode: `hero priority preloadLink :lazy="false" loading="eager"`,
     expected: "Hero video should render eager with high fetch priority and preload link, without hard refresh.",
-    src: "/media-test/videos/sample-video.mp4",
+    src: "/media-test/videos/sample-360.mp4",
     controls: true,
     lazy: false,
     loading: "eager",
@@ -591,7 +591,7 @@ const advancedVideoCases: Array<Record<string, any>> = [
     title: "Poster-first then page-ready chunk loading",
     propsCode: `deferUntilPageReady revealOnPageReady chunkLoading poster`,
     expected: "Starts as poster/placeholder first, then reveals video load after full page ready with no reload.",
-    src: "/media-test/videos/sample-1080.mp4",
+    src: "/media-test/videos/sample-360.mp4",
     controls: true,
     lazy: false,
     loading: "eager",
@@ -607,7 +607,7 @@ const advancedVideoCases: Array<Record<string, any>> = [
     title: "Hero + defer + chunk + skip combo",
     propsCode: `hero deferUntilPageReady chunkLoading skipControls :skipSeconds="5"`,
     expected: "Combines hero hints, deferred chunk loading, and skip controls while keeping SPA runtime stable.",
-    src: "/media-test/videos/sample-720.mp4",
+    src: "/media-test/videos/sample-360.mp4",
     controls: true,
     lazy: false,
     loading: "eager",
@@ -748,7 +748,7 @@ const fullResuxVideoCapabilityGroups: FullResuxVideoGroup[] = [
     description: "Eager/lazy variations and reveal behavior.",
     cases: [
       makeVideoCase("b1-eager-video", "1. Eager video", `:lazy="false" loading="eager"`, "Expected: requests on initial render.", {
-        src: videoAsset.mp4,
+        src: videoAsset.q360,
         controls: true,
         lazy: false,
         loading: "eager",
@@ -779,7 +779,7 @@ const fullResuxVideoCapabilityGroups: FullResuxVideoGroup[] = [
         preload: "metadata",
       }),
       makeVideoCase("b8-eager-preload-metadata", "8. Eager preload metadata", `loading="eager" preload="metadata"`, "Expected: metadata preload on initial render.", {
-        src: videoAsset.mp4,
+        src: videoAsset.q360,
         controls: true,
         lazy: false,
         loading: "eager",
@@ -787,7 +787,7 @@ const fullResuxVideoCapabilityGroups: FullResuxVideoGroup[] = [
         poster: videoAsset.poster,
       }),
       makeVideoCase("b9-eager-preload-auto", "9. Eager preload auto", `loading="eager" preload="auto"`, "Expected: auto preload without route navigation.", {
-        src: videoAsset.mp4,
+        src: videoAsset.q360,
         controls: true,
         lazy: false,
         loading: "eager",
@@ -923,7 +923,7 @@ const fullResuxVideoCapabilityGroups: FullResuxVideoGroup[] = [
         controls: true,
         lazy: false,
         loading: "eager",
-        preload: "metadata",
+        preload: "none",
         poster: videoAsset.poster,
         sources: [
           { src: videoAsset.webm, type: "video/webm" },
@@ -1020,7 +1020,7 @@ const fullResuxVideoCapabilityGroups: FullResuxVideoGroup[] = [
         speedControl: true,
       }),
       makeVideoCase("g7-speed-eager", "7. Speed control on eager video", `:lazy="false" loading="eager" speed-control`, "Expected: speed control works eagerly.", {
-        src: videoAsset.mp4,
+        src: videoAsset.q360,
         controls: true,
         lazy: false,
         loading: "eager",
