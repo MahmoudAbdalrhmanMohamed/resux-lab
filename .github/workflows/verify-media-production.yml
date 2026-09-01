@@ -1,0 +1,138 @@
+name: Verify production media performance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/verify-media-production.yml
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify production page and collect timings
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright'
+
+          const url = 'https://resux-lab.vercel.app/media'
+          const expectedFallback404s = [
+            '/media-test/videos/missing-quality.webm',
+            '/media-test/videos/missing-quality.mp4',
+            '/media-test/images/missing-poster.jpg',
+          ]
+
+          const browser = await chromium.launch({ headless: true })
+          const context = await browser.newContext()
+          const page = await context.newPage()
+          await page.route('**/*', async route => route.continue())
+
+          const badResponses = []
+          const consoleErrors = []
+          page.on('response', response => {
+            if (response.status() >= 400 && !expectedFallback404s.some(path => response.url().includes(path))) {
+              badResponses.push({ status: response.status(), url: response.url() })
+            }
+          })
+          page.on('console', message => {
+            if (message.type() === 'error') consoleErrors.push(message.text())
+          })
+          page.on('pageerror', error => consoleErrors.push(`pageerror: ${error.message}`))
+
+          const started = Date.now()
+          const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 })
+          const domElapsed = Date.now() - started
+          await page.waitForSelector('h1', { state: 'visible', timeout: 10000 })
+          const h1 = await page.locator('h1').first().textContent()
+          await page.waitForTimeout(5000)
+
+          const metrics = await page.evaluate(() => {
+            const nav = performance.getEntriesByType('navigation')[0]
+            const paints = performance.getEntriesByType('paint')
+            const resources = performance.getEntriesByType('resource')
+            const byType = {}
+            for (const entry of resources) {
+              const type = entry.initiatorType || 'other'
+              byType[type] ??= { count: 0, transferSize: 0, decodedBodySize: 0 }
+              byType[type].count += 1
+              byType[type].transferSize += entry.transferSize || 0
+              byType[type].decodedBodySize += entry.decodedBodySize || 0
+            }
+            return {
+              navigation: nav ? {
+                responseStart: nav.responseStart,
+                domContentLoaded: nav.domContentLoadedEventEnd,
+                loadEventEnd: nav.loadEventEnd,
+                transferSize: nav.transferSize,
+                encodedBodySize: nav.encodedBodySize,
+              } : null,
+              paints: Object.fromEntries(paints.map(p => [p.name, p.startTime])),
+              resources: {
+                count: resources.length,
+                transferSize: resources.reduce((sum, r) => sum + (r.transferSize || 0), 0),
+                decodedBodySize: resources.reduce((sum, r) => sum + (r.decodedBodySize || 0), 0),
+                byType,
+              },
+            }
+          })
+
+          console.log(JSON.stringify({
+            status: response?.status(),
+            heading: h1,
+            domElapsed,
+            ...metrics,
+            badResponses,
+            consoleErrors,
+          }, null, 2))
+
+          if (!response || !response.ok()) throw new Error(`Document request failed: ${response?.status()}`)
+          if (!h1?.includes('Media')) throw new Error(`Unexpected page heading: ${h1}`)
+          if (badResponses.length) throw new Error(`Unexpected HTTP errors: ${JSON.stringify(badResponses)}`)
+          if (consoleErrors.length) throw new Error(`Browser errors: ${JSON.stringify(consoleErrors)}`)
+          if (metrics.navigation?.domContentLoaded > 10000) {
+            throw new Error(`DOMContentLoaded is still too slow: ${metrics.navigation.domContentLoaded.toFixed(0)}ms`)
+          }
+
+          await browser.close()
+          NODE
+
+      - name: Verify CDN response headers
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --dump-header /tmp/media-headers.txt --output /dev/null https://resux-lab.vercel.app/media
+          cat /tmp/media-headers.txt
+          grep -i '^cache-control: public' /tmp/media-headers.txt
+
+      - name: Cleanup verification workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/verify-media-production.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/verify-media-production.yml
+          git commit -m 'ci: remove production media verifier'
+          git push origin HEAD:main
