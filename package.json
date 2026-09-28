@@ -33,5 +33,10 @@
     "plyr": "^3.8.3",
     "resuxjs": "0.4.0-beta.2",
     "swiper": "^12.1.4"
+  },
+  "overrides": {
+    "nitropack": {
+      "rollup-plugin-visualizer": "6.0.11"
+    }
   }
 }
