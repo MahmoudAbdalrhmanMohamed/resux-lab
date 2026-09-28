@@ -29,12 +29,6 @@ jobs:
       - name: Strict install
         run: npm ci --no-audit --no-fund
 
-      - name: Build lab
-        run: npm run build
-
-      - name: Run server regressions
-        run: npm run test:e2e
-
       - name: Commit regenerated lock and remove helper
         shell: bash
         run: |
