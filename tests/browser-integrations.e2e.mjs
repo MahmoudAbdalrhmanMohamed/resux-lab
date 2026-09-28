@@ -46,14 +46,6 @@ function routePayloadPath(url) {
   return parsed.searchParams.get("path");
 }
 
-async function waitForRequestCount(requests, expected) {
-  for (let attempt = 0; attempt < 100; attempt++) {
-    if (requests.length >= expected) return;
-    await wait(50);
-  }
-  throw new Error(`Timed out waiting for ${expected} route payload request(s); saw ${requests.length}.`);
-}
-
 async function assertLocaleState(page, { locale, dir, welcome }) {
   await page.waitForFunction(
     ({ expectedLocale, expectedDir, welcomeSource }) => {
@@ -206,10 +198,21 @@ try {
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
   const reloadedMediaLink = page.locator('a[href="/media"]').first();
   await reloadedMediaLink.waitFor();
+
+  // A full-document navigation may itself trigger pointerover at the preserved
+  // mouse coordinates before the test can register a response waiter. Accept
+  // that valid early prefetch; otherwise dispatch the same bubbling event
+  // deterministically once the Resux runtime listener is installed.
   if (mediaRouteRequests.length === 1) {
-    await reloadedMediaLink.hover();
+    await page.waitForFunction(() => globalThis.__RESUX_INSTALLED__ === true);
+    const secondPrefetch = page.waitForResponse(
+      (response) => routePayloadPath(response.url()) === "/media",
+    );
+    await reloadedMediaLink.dispatchEvent("pointerover", { bubbles: true });
+    const secondResponse = await secondPrefetch;
+    assert.equal(secondResponse.status(), 200);
   }
-  await waitForRequestCount(mediaRouteRequests, 2);
+
   await wait(100);
   assert.equal(mediaRouteRequests.length, 2, "A new browser document should issue exactly one fresh /media route payload request.");
 

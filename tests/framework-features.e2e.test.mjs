@@ -165,6 +165,20 @@ test("all-matrix feature page renders exported API count badge", async () => {
   assert.match(html, /api-count-badge/);
 });
 
+test("fonts and icons feature page exercises public asset modules", async () => {
+  const html = await fetchHtml("/features/platform");
+  assert.match(html, /Resux Fonts &amp; Icons|Resux Fonts & Icons/);
+  assert.match(
+    html,
+    /<svg\b(?=[^>]*\bdata-icon-name=["']solar:check-circle-linear["'])[^>]*>/i,
+  );
+  assert.match(html, /Inter/);
+  assert.match(
+    html,
+    /<link\b(?=[^>]*\brel=["']stylesheet["'])(?=[^>]*\bhref=["'][^"']*fonts\.googleapis\.com[^"']*["'])[^>]*>/i,
+  );
+});
+
 test("halal-test page renders Halal-AI LLM interactive test bench", async () => {
   const html = await fetchHtml("/halal-test");
   assert.match(html, /Halal Core &amp; Halal-AI LLM Test Bench|Halal Core & Halal-AI LLM Test Bench/);

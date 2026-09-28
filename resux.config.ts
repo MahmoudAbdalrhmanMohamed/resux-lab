@@ -5,6 +5,12 @@ export default defineResuxConfig({
     ["resux:performance", { assetMaxAge: 31536000 }],
     "resuxjs/i18n",
     ["resuxjs/ui", { defaultStyles: true }],
+    ["resuxjs/icons", { collections: ["solar"], mode: "svg", lazy: false }],
+    ["resuxjs/fonts", {
+      google: [{ name: "Inter", weights: [400, 700], display: "swap", strategy: "eager" }],
+      preconnect: true,
+      strategy: "eager",
+    }],
     ["./modules/lab.ts", { label: "Resux Lab Bench" }],
   ],
   i18n: {
