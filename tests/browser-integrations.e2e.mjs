@@ -46,14 +46,6 @@ function routePayloadPath(url) {
   return parsed.searchParams.get("path");
 }
 
-async function waitForRequestCount(requests, expected) {
-  for (let attempt = 0; attempt < 100; attempt++) {
-    if (requests.length >= expected) return;
-    await wait(50);
-  }
-  throw new Error(`Timed out waiting for ${expected} route payload request(s); saw ${requests.length}.`);
-}
-
 async function assertLocaleState(page, { locale, dir, welcome }) {
   await page.waitForFunction(
     ({ expectedLocale, expectedDir, welcomeSource }) => {
@@ -206,10 +198,18 @@ try {
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
   const reloadedMediaLink = page.locator('a[href="/media"]').first();
   await reloadedMediaLink.waitFor();
-  if (mediaRouteRequests.length === 1) {
-    await reloadedMediaLink.hover();
-  }
-  await waitForRequestCount(mediaRouteRequests, 2);
+
+  // Move away first so Playwright must dispatch a fresh pointerover after the
+  // full-document navigation. Keeping the pointer over the same coordinates
+  // can otherwise make hover() a no-op and turn this contract into a race.
+  await page.locator("h1").hover();
+  const secondPrefetch = page.waitForResponse(
+    (response) => routePayloadPath(response.url()) === "/media",
+  );
+  await reloadedMediaLink.hover();
+  const secondResponse = await secondPrefetch;
+  assert.equal(secondResponse.status(), 200);
+
   await wait(100);
   assert.equal(mediaRouteRequests.length, 2, "A new browser document should issue exactly one fresh /media route payload request.");
 
