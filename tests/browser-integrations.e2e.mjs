@@ -199,16 +199,19 @@ try {
   const reloadedMediaLink = page.locator('a[href="/media"]').first();
   await reloadedMediaLink.waitFor();
 
-  // Move away first so Playwright must dispatch a fresh pointerover after the
-  // full-document navigation. Keeping the pointer over the same coordinates
-  // can otherwise make hover() a no-op and turn this contract into a race.
-  await page.locator("h1").hover();
-  const secondPrefetch = page.waitForResponse(
-    (response) => routePayloadPath(response.url()) === "/media",
-  );
-  await reloadedMediaLink.hover();
-  const secondResponse = await secondPrefetch;
-  assert.equal(secondResponse.status(), 200);
+  // A full-document navigation may itself trigger pointerover at the preserved
+  // mouse coordinates before the test can register a response waiter. Accept
+  // that valid early prefetch; otherwise dispatch the same bubbling event
+  // deterministically once the Resux runtime listener is installed.
+  if (mediaRouteRequests.length === 1) {
+    await page.waitForFunction(() => globalThis.__RESUX_INSTALLED__ === true);
+    const secondPrefetch = page.waitForResponse(
+      (response) => routePayloadPath(response.url()) === "/media",
+    );
+    await reloadedMediaLink.dispatchEvent("pointerover", { bubbles: true });
+    const secondResponse = await secondPrefetch;
+    assert.equal(secondResponse.status(), 200);
+  }
 
   await wait(100);
   assert.equal(mediaRouteRequests.length, 2, "A new browser document should issue exactly one fresh /media route payload request.");
