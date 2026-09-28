@@ -12,6 +12,7 @@ const features = [
   { title: 'Device Intelligence', href: '/features/device', label: 'Device', status: 'new' },
   { title: 'Error Boundary & Recovery', href: '/features/errors', label: 'Errors', status: 'new' },
   { title: 'All-Features API Matrix', href: '/features/all-matrix', label: 'Matrix', status: 'new' },
+  { title: 'Fonts & Icons', href: '/features/platform', label: 'Assets', status: 'new' },
   { title: 'Halal Core & Halal-AI LLM', href: '/halal-test', label: 'AI/Security', status: 'new' },
   { title: 'Resumable handlers', href: '/state', label: 'Runtime', status: 'ready' },
   { title: 'v-model forms', href: '/forms', label: 'Compiler', status: 'ready' },
