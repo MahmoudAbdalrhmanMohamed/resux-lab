@@ -27,9 +27,19 @@ const publicEntrypoints = [
   "resuxjs/halal",
 ];
 
-test("lab is locked to the current Resux public beta", () => {
+test("published Resux dependency matches the installed package version", () => {
+  const labManifest = require("../package.json");
+  const declaredVersion = labManifest.dependencies?.resuxjs;
+
+  // Compatibility jobs replace the dependency with a locally packed framework
+  // ref. Only semver-based published-package runs should enforce an exact
+  // installed version match.
+  if (typeof declaredVersion !== "string" || declaredVersion.startsWith("file:")) {
+    return;
+  }
+
   const manifest = require("resuxjs/package.json");
-  assert.equal(manifest.version, "0.4.0-beta.2");
+  assert.equal(manifest.version, declaredVersion);
 });
 
 for (const specifier of publicEntrypoints) {
