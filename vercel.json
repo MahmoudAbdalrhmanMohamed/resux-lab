@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nitro",
-  "buildCommand": "npm view resuxjs@0.4.0-beta.4 dist.integrity && npm run build"
+  "buildCommand": "npm run build"
 }
