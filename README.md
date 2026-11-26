@@ -25,7 +25,7 @@ This app is intentionally not a tiny starter. It is the executable compatibility
 
 ## Framework under test
 
-The lab tests a packed sibling Resux checkout rather than whatever version happens to be published on npm. The committed `package.json` points at the current local tarball name for ordinary development, while CI rewrites that dependency to the filename actually produced by `npm pack`. This allows branches, tags, and commit SHAs with a different package version to be tested correctly.
+The compatibility CI jobs test a packed sibling Resux checkout, and the `published-package` job tests the published npm release. The committed `package.json` pins the published `resuxjs` version, and `package-lock.json` matches it. The compatibility jobs rewrite that dependency to the filename actually produced by `npm pack`. This allows branches, tags, and commit SHAs with a different package version to be tested correctly.
 
 For a fresh local checkout:
 
