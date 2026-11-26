@@ -8,7 +8,8 @@
     "build": "resux build .",
     "preview": "resux preview . --port 4000",
     "test:e2e": "node --test --test-concurrency=1 tests/*.e2e*.mjs",
-    "test:browser": "node tests/browser-integrations.e2e.mjs"
+    "test:browser": "node tests/browser-integrations.e2e.mjs",
+    "perf": "node scripts/perf-smoke.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
