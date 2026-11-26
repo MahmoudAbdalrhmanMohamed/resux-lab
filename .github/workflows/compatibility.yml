@@ -42,6 +42,7 @@ jobs:
         shell: bash
         env:
           RESUX_REF: ${{ github.event.inputs.resux_ref || 'main' }}
+          LAB_NODE: ${{ matrix.node }}
         run: |
           set -euo pipefail
           rm -rf ../resux
@@ -69,6 +70,10 @@ jobs:
           const manifest = JSON.parse(readFileSync(packagePath, "utf8"));
           manifest.dependencies ??= {};
           manifest.dependencies.resuxjs = process.env.RESUX_DEP;
+          // resuxjs pulls unifont, which needs undici 8 (Node >=22.19). Use undici 7 on Node 20.
+          if (Number(process.env.LAB_NODE.split(".")[0]) < 22) {
+            manifest.overrides = { ...(manifest.overrides ?? {}), unifont: { undici: "^7.30.2" } };
+          }
           writeFileSync(packagePath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
           NODE
 
@@ -231,6 +236,7 @@ jobs:
         shell: bash
         env:
           RESUX_REF: ${{ github.event.inputs.resux_ref || 'main' }}
+          LAB_NODE: ${{ matrix.node }}
         run: |
           set -euo pipefail
           rm -rf ../resux
@@ -258,6 +264,10 @@ jobs:
           const manifest = JSON.parse(readFileSync(packagePath, "utf8"));
           manifest.dependencies ??= {};
           manifest.dependencies.resuxjs = process.env.RESUX_DEP;
+          // resuxjs pulls unifont, which needs undici 8 (Node >=22.19). Use undici 7 on Node 20.
+          if (Number(process.env.LAB_NODE.split(".")[0]) < 22) {
+            manifest.overrides = { ...(manifest.overrides ?? {}), unifont: { undici: "^7.30.2" } };
+          }
           writeFileSync(packagePath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
           NODE
 
